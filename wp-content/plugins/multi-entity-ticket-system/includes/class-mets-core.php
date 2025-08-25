@@ -64,6 +64,15 @@ class METS_Core {
 	protected $plugin_name;
 
 	/**
+	 * The public-facing functionality of the plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      METS_Public    $plugin_public    The public-facing functionality of the plugin.
+	 */
+	protected $plugin_public;
+
+	/**
 	 * The current version of the plugin.
 	 *
 	 * @since    1.0.0
@@ -288,22 +297,22 @@ class METS_Core {
 	 * @access   private
 	 */
 	private function define_public_hooks() {
-		$plugin_public = new METS_Public( $this->get_plugin_name(), $this->get_version() );
+		$this->plugin_public = new METS_Public( $this->get_plugin_name(), $this->get_version() );
 
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
-		$this->loader->add_action( 'init', $plugin_public, 'register_shortcodes' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $this->plugin_public, 'enqueue_styles' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $this->plugin_public, 'enqueue_scripts' );
+		$this->loader->add_action( 'init', $this->plugin_public, 'register_shortcodes' );
 
 		// AJAX hooks for public functionality
-		$this->loader->add_action( 'wp_ajax_mets_submit_ticket', $plugin_public, 'ajax_submit_ticket' );
-		$this->loader->add_action( 'wp_ajax_nopriv_mets_submit_ticket', $plugin_public, 'ajax_submit_ticket' );
-		$this->loader->add_action( 'wp_ajax_mets_upload_file', $plugin_public, 'ajax_upload_file' );
-		$this->loader->add_action( 'wp_ajax_nopriv_mets_upload_file', $plugin_public, 'ajax_upload_file' );
-		$this->loader->add_action( 'wp_ajax_mets_customer_reply', $plugin_public, 'ajax_customer_reply' );
-		$this->loader->add_action( 'wp_ajax_mets_search_entities_public', $plugin_public, 'ajax_search_entities' );
-		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_entities_public', $plugin_public, 'ajax_search_entities' );
-		$this->loader->add_action( 'wp_ajax_mets_search_kb_articles', $plugin_public, 'ajax_search_kb_articles' );
-		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_kb_articles', $plugin_public, 'ajax_search_kb_articles' );
+		$this->loader->add_action( 'wp_ajax_mets_submit_ticket', $this->plugin_public, 'ajax_submit_ticket' );
+		$this->loader->add_action( 'wp_ajax_nopriv_mets_submit_ticket', $this->plugin_public, 'ajax_submit_ticket' );
+		$this->loader->add_action( 'wp_ajax_mets_upload_file', $this->plugin_public, 'ajax_upload_file' );
+		$this->loader->add_action( 'wp_ajax_nopriv_mets_upload_file', $this->plugin_public, 'ajax_upload_file' );
+		$this->loader->add_action( 'wp_ajax_mets_customer_reply', $this->plugin_public, 'ajax_customer_reply' );
+		$this->loader->add_action( 'wp_ajax_mets_search_entities_public', $this->plugin_public, 'ajax_search_entities' );
+		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_entities_public', $this->plugin_public, 'ajax_search_entities' );
+		$this->loader->add_action( 'wp_ajax_mets_search_kb_articles', $this->plugin_public, 'ajax_search_kb_articles' );
+		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_kb_articles', $this->plugin_public, 'ajax_search_kb_articles' );
 	}
 
 	/**
@@ -630,6 +639,16 @@ class METS_Core {
 	 */
 	public function get_version() {
 		return $this->version;
+	}
+
+	/**
+	 * Retrieve the public-facing functionality of the plugin.
+	 *
+	 * @since     1.0.0
+	 * @return    METS_Public    The public-facing functionality of the plugin.
+	 */
+	public function get_public() {
+		return $this->plugin_public;
 	}
 
 	/**
