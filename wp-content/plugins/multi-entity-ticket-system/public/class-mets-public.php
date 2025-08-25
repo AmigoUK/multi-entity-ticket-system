@@ -814,10 +814,18 @@ class METS_Public {
 	 * @since    1.0.0
 	 */
 	public function ajax_submit_ticket() {
+		// Add debugging
+		error_log('[METS DEBUG] ajax_submit_ticket called');
+		error_log('[METS DEBUG] POST data: ' . print_r($_POST, true));
+		error_log('[METS DEBUG] FILES data: ' . print_r($_FILES, true));
+		
 		// Verify nonce
 		if ( ! isset( $_POST['mets_ticket_nonce'] ) || ! wp_verify_nonce( $_POST['mets_ticket_nonce'], 'mets_submit_ticket' ) ) {
+			error_log('[METS DEBUG] Nonce verification failed');
 			wp_send_json_error( array( 'message' => __( 'Security check failed. Please refresh the page and try again.', 'multi-entity-ticket-system' ) ) );
 		}
+		
+		error_log('[METS DEBUG] Nonce verified successfully');
 
 		// Check if user is logged in (if required)
 		if ( ! is_user_logged_in() && ( ! isset( $_POST['mets_customer_name'] ) || ! isset( $_POST['mets_customer_email'] ) ) ) {
@@ -901,6 +909,7 @@ class METS_Public {
 		$ticket = $ticket_model->get( $ticket_id );
 
 		// Send success response with ticket info
+		error_log('[METS DEBUG] Sending success response for ticket ID: ' . $ticket_id);
 		wp_send_json_success( array(
 			'message' => __( 'Ticket created successfully!', 'multi-entity-ticket-system' ),
 			'ticket_id' => $ticket_id,

@@ -344,6 +344,8 @@
 		$('#mets-ticket-form').on('submit', function(e) {
 			e.preventDefault();
 			
+			console.log('[METS DEBUG] Form submission started');
+			
 			var form = $(this);
 			var submitButton = form.find('.mets-submit-button');
 			var loadingSpinner = form.find('.mets-loading');
@@ -427,6 +429,8 @@
 			formData.append('action', 'mets_submit_ticket');
 			
 			// Submit ticket first
+			console.log('[METS DEBUG] Sending AJAX request to:', mets_public_ajax.ajax_url);
+			
 			$.ajax({
 				url: mets_public_ajax.ajax_url,
 				type: 'POST',
@@ -434,6 +438,7 @@
 				processData: false,
 				contentType: false,
 				success: function(response) {
+					console.log('[METS DEBUG] AJAX success response:', response);
 					if (response.success) {
 						var ticketId = response.data.ticket_id;
 						var ticketNumber = response.data.ticket_number;
@@ -449,16 +454,19 @@
 							displayFinalResults(response.data.message, ticketNumber, [], submitButton, loadingSpinner, successMessage, errorMessage, form);
 						}
 					} else {
+						console.log('[METS DEBUG] AJAX returned error:', response.data.message);
 						loadingSpinner.hide();
 						submitButton.prop('disabled', false);
 						errorMessage.text(response.data.message || 'Failed to create ticket. Please try again.').show();
 					}
 				},
 				error: function(xhr, status, error) {
+					console.log('[METS DEBUG] AJAX error - xhr:', xhr);
+					console.log('[METS DEBUG] AJAX error - status:', status);
+					console.log('[METS DEBUG] AJAX error - error:', error);
 					loadingSpinner.hide();
 					submitButton.prop('disabled', false);
 					errorMessage.text('An error occurred. Please try again later.').show();
-					console.error('Ticket submission error:', error);
 				}
 			});
 		}
