@@ -377,7 +377,7 @@ class METS_Public {
 		// Enqueue styles for ticket form
 		wp_enqueue_style( 
 			'mets-ticket-form', 
-			METS_PLUGIN_URL . 'public/css/mets-ticket-form.css', 
+			METS_PLUGIN_URL . 'assets/css/mets-mobile-ticket-form.css', 
 			array(), 
 			METS_VERSION 
 		);

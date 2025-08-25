@@ -33,11 +33,25 @@
             
             this.widget = $('#mets-ai-chat-widget');
             if (!this.widget.length) {
-                console.error('METS AI Chat Widget: Widget element not found');
+                console.warn('METS AI Chat Widget: Widget element not found, will try again in 1 second');
+                // Try again in case the DOM hasn't fully loaded
+                setTimeout(() => {
+                    this.widget = $('#mets-ai-chat-widget');
+                    if (!this.widget.length) {
+                        console.error('METS AI Chat Widget: Widget element still not found after retry');
+                        return;
+                    }
+                    console.log('METS AI Chat Widget: Found widget element on retry');
+                    this.continueInit();
+                }, 1000);
                 return;
             }
 
             console.log('METS AI Chat Widget: Found widget element');
+            this.continueInit();
+        }
+
+        continueInit() {
             this.setupElements();
             this.bindEvents();
             this.setupAutoResize();

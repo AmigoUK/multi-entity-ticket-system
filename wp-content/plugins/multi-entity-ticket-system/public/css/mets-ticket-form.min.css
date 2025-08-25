@@ -1,0 +1,211 @@
+/**
+ * Ticket Form Styles
+ * Multi-Entity Ticket System
+ */
+
+.mets-ticket-form-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.mets-ticket-form h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.mets-form-group {
+    margin-bottom: 20px;
+}
+
+.mets-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.mets-form-group .required {
+    color: #e74c3c;
+}
+
+.mets-form-group input,
+.mets-form-group textarea,
+.mets-form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.mets-form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.mets-form-group select {
+    height: 40px;
+}
+
+.mets-file-upload {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.mets-file-upload input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.mets-file-upload-label {
+    display: block;
+    padding: 10px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    text-align: center;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mets-file-upload-label:hover {
+    border-color: #3498db;
+    background-color: #f8f9fa;
+}
+
+.mets-file-list {
+    margin-top: 10px;
+}
+
+.mets-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.mets-file-item .mets-file-name {
+    flex: 1;
+    font-size: 13px;
+    color: #555;
+}
+
+.mets-file-item .mets-file-size {
+    font-size: 12px;
+    color: #777;
+    margin: 0 10px;
+}
+
+.mets-file-item .mets-remove-file {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.mets-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.mets-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mets-btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.mets-btn-primary:hover {
+    background: #2980b9;
+}
+
+.mets-btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.mets-btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+.mets-form-message {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: none;
+}
+
+.mets-form-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.mets-form-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.mets-loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.mets-loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .mets-ticket-form-wrapper {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .mets-form-actions {
+        flex-direction: column;
+    }
+    
+    .mets-btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}

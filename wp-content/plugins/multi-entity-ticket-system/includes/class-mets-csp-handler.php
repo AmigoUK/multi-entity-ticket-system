@@ -31,15 +31,28 @@ class METS_CSP_Handler {
             return;
         }
 
+        // Check if we're in a development environment
+        $is_dev_environment = defined('WP_DEBUG') && WP_DEBUG && 
+                             (strpos($_SERVER['HTTP_HOST'] ?? '', 'dev') !== false || 
+                              strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false);
+
         // Base CSP directives for METS functionality
         $csp_directives = array(
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
             "style-src 'self' 'unsafe-inline' https:",
             "img-src 'self' data: https:",
             "font-src 'self' data: https:",
-            "connect-src 'self'"
+            "connect-src 'self'",
+            "worker-src 'self' blob:"
         );
+
+        // Add more permissive directives for development
+        if ($is_dev_environment) {
+            $csp_directives[1] = "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http: https:";
+            $csp_directives[4] = "font-src 'self' data: https: http:";
+            $csp_directives[] = "worker-src 'self' blob: http: https:";
+        }
 
         // Add n8n chat support if enabled
         $n8n_settings = get_option( 'mets_n8n_chat_settings', array() );
@@ -76,15 +89,28 @@ class METS_CSP_Handler {
      * @return   array                Modified headers
      */
     public static function filter_wp_headers( $headers ) {
+        // Check if we're in a development environment
+        $is_dev_environment = defined('WP_DEBUG') && WP_DEBUG && 
+                             (strpos($_SERVER['HTTP_HOST'] ?? '', 'dev') !== false || 
+                              strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false);
+
         // Base CSP directives for METS functionality
         $csp_directives = array(
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
             "style-src 'self' 'unsafe-inline' https:",
             "img-src 'self' data: https:",
             "font-src 'self' data: https:",
-            "connect-src 'self'"
+            "connect-src 'self'",
+            "worker-src 'self' blob:"
         );
+
+        // Add more permissive directives for development
+        if ($is_dev_environment) {
+            $csp_directives[1] = "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http: https:";
+            $csp_directives[4] = "font-src 'self' data: https: http:";
+            $csp_directives[] = "worker-src 'self' blob: http: https:";
+        }
 
         // Add n8n chat support if enabled
         $n8n_settings = get_option( 'mets_n8n_chat_settings', array() );
