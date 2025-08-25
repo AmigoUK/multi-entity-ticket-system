@@ -1,0 +1,131 @@
+# WordPress
+wp-config.php
+wp-content/advanced-cache.php
+wp-content/backup-db/
+wp-content/backups/
+wp-content/blogs.dir/
+wp-content/cache/
+wp-content/upgrade/
+wp-content/uploads/
+wp-content/wflogs/
+
+# WordPress core files
+wp-admin/
+wp-includes/
+wp-content/plugins/hello.php
+
+# Plugin specific
+/vendor/
+/node_modules/
+/composer.phar
+/composer.lock
+/package-lock.json
+/yarn.lock
+/*.log
+/error_log
+/debug.log
+/php_error.log
+.DS_Store
+.Thumbds_store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+\#*\#
+
+# Development
+/debug/
+/optimize/
+/review/
+/document/
+/tools/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# CodeKit
+*.codekit-cache
+config.codekit
+
+# Compiled files
+*.min.js
+*.min.css
+
+# Backup files
+*.backup
+*.truncated.backup
+*.corrupted
+
+# Log files
+*.log
+
+# Testing
+/tests/
+/phpunit.xml
+/phpunit.xml.dist
+
+# Distribution / packaging
+*.zip
+*.tar.gz
+*.tar.bz2
+
+# Configuration
+.env
+.env.local
+.env.*.local
+
+# Mac specific
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.sql
+*.sql.gz
+
+# JetBrains IDE
+/.idea/
+
+# VS Code
+/.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Temporary files
+~*
+*~
+*.tmp
+*.temp
