@@ -51,7 +51,7 @@ class METS_CSP_Handler {
         if ($is_dev_environment) {
             $csp_directives[1] = "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http: https:";
             $csp_directives[4] = "font-src 'self' data: https: http:";
-            $csp_directives[] = "worker-src 'self' blob: http: https:";
+            $csp_directives[6] = "worker-src 'self' blob: http: https:";
         }
 
         // Add n8n chat support if enabled
@@ -109,7 +109,7 @@ class METS_CSP_Handler {
         if ($is_dev_environment) {
             $csp_directives[1] = "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: http: https:";
             $csp_directives[4] = "font-src 'self' data: https: http:";
-            $csp_directives[] = "worker-src 'self' blob: http: https:";
+            $csp_directives[6] = "worker-src 'self' blob: http: https:";
         }
 
         // Add n8n chat support if enabled
