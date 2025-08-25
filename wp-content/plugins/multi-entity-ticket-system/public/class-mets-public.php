@@ -388,7 +388,7 @@ class METS_Public {
 		<div class="mets-ticket-form-wrapper">
 			<h2><?php _e( 'Submit a Support Ticket', 'multi-entity-ticket-system' ); ?></h2>
 			
-			<form class="mets-ticket-form" method="post" enctype="multipart/form-data">
+			<form id="mets-ticket-form" class="mets-ticket-form" method="post" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'mets_submit_ticket', 'mets_ticket_nonce' ); ?>
 				
 				<div class="mets-form-group">
