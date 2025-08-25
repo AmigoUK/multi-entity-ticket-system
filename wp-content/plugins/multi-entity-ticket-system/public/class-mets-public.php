@@ -443,6 +443,29 @@ class METS_Public {
 						<label for="mets_customer_email"><?php _e( 'Your Email', 'multi-entity-ticket-system' ); ?> <span class="required">*</span></label>
 						<input type="email" id="mets_customer_email" name="mets_customer_email" required placeholder="<?php _e( 'Enter your email address', 'multi-entity-ticket-system' ); ?>">
 					</div>
+					
+					<div class="mets-form-group">
+						<label for="mets_customer_phone"><?php _e( 'Your Phone', 'multi-entity-ticket-system' ); ?></label>
+						<input type="tel" id="mets_customer_phone" name="mets_customer_phone" placeholder="<?php _e( 'Enter your phone number', 'multi-entity-ticket-system' ); ?>">
+					</div>
+				<?php else : ?>
+					<?php 
+					$current_user = wp_get_current_user();
+					?>
+					<div class="mets-form-group">
+						<label for="mets_customer_name"><?php _e( 'Your Name', 'multi-entity-ticket-system' ); ?> <span class="required">*</span></label>
+						<input type="text" id="mets_customer_name" name="mets_customer_name" required value="<?php echo esc_attr( $current_user->display_name ); ?>" placeholder="<?php _e( 'Enter your full name', 'multi-entity-ticket-system' ); ?>">
+					</div>
+					
+					<div class="mets-form-group">
+						<label for="mets_customer_email"><?php _e( 'Your Email', 'multi-entity-ticket-system' ); ?> <span class="required">*</span></label>
+						<input type="email" id="mets_customer_email" name="mets_customer_email" required value="<?php echo esc_attr( $current_user->user_email ); ?>" placeholder="<?php _e( 'Enter your email address', 'multi-entity-ticket-system' ); ?>">
+					</div>
+					
+					<div class="mets-form-group">
+						<label for="mets_customer_phone"><?php _e( 'Your Phone', 'multi-entity-ticket-system' ); ?></label>
+						<input type="tel" id="mets_customer_phone" name="mets_customer_phone" placeholder="<?php _e( 'Enter your phone number', 'multi-entity-ticket-system' ); ?>">
+					</div>
 				<?php endif; ?>
 				
 				<div class="mets-form-actions">
@@ -783,5 +806,105 @@ class METS_Public {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Handle AJAX ticket submission
+	 *
+	 * @since    1.0.0
+	 */
+	public function ajax_submit_ticket() {
+		// Verify nonce
+		if ( ! isset( $_POST['mets_ticket_nonce'] ) || ! wp_verify_nonce( $_POST['mets_ticket_nonce'], 'mets_submit_ticket' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed. Please refresh the page and try again.', 'multi-entity-ticket-system' ) ) );
+		}
+
+		// Check if user is logged in (if required)
+		if ( ! is_user_logged_in() && ( ! isset( $_POST['mets_customer_name'] ) || ! isset( $_POST['mets_customer_email'] ) ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please provide your name and email.', 'multi-entity-ticket-system' ) ) );
+		}
+
+		// Get and validate inputs
+		$subject = isset( $_POST['mets_ticket_subject'] ) ? sanitize_text_field( $_POST['mets_ticket_subject'] ) : '';
+		$description = isset( $_POST['mets_ticket_description'] ) ? wp_kses_post( $_POST['mets_ticket_description'] ) : '';
+		$department_id = isset( $_POST['mets_ticket_department'] ) ? intval( $_POST['mets_ticket_department'] ) : 0;
+		$priority = isset( $_POST['mets_ticket_priority'] ) ? sanitize_text_field( $_POST['mets_ticket_priority'] ) : 'medium';
+		$customer_name = '';
+		$customer_email = '';
+		$customer_phone = '';
+
+		if ( is_user_logged_in() ) {
+			$current_user = wp_get_current_user();
+			$customer_name = $current_user->display_name;
+			$customer_email = $current_user->user_email;
+			
+			// Still get phone from form if provided
+			if ( isset( $_POST['mets_customer_phone'] ) ) {
+				$customer_phone = sanitize_text_field( $_POST['mets_customer_phone'] );
+			}
+		} else {
+			$customer_name = isset( $_POST['mets_customer_name'] ) ? sanitize_text_field( $_POST['mets_customer_name'] ) : '';
+			$customer_email = isset( $_POST['mets_customer_email'] ) ? sanitize_email( $_POST['mets_customer_email'] ) : '';
+			$customer_phone = isset( $_POST['mets_customer_phone'] ) ? sanitize_text_field( $_POST['mets_customer_phone'] ) : '';
+		}
+
+		// Validate required fields
+		if ( empty( $subject ) || empty( $description ) || empty( $department_id ) || empty( $customer_name ) || empty( $customer_email ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'multi-entity-ticket-system' ) ) );
+		}
+
+		// Validate email
+		if ( ! is_email( $customer_email ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please provide a valid email address.', 'multi-entity-ticket-system' ) ) );
+		}
+
+		// Check if department exists
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-entity-model.php';
+		$entity_model = new METS_Entity_Model();
+		$department = $entity_model->get( $department_id );
+		
+		if ( ! $department ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid department selected.', 'multi-entity-ticket-system' ) ) );
+		}
+
+		// Create ticket
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+		$ticket_model = new METS_Ticket_Model();
+
+		// Generate unique ticket number
+		$ticket_number = $ticket_model->generate_ticket_number( $department_id );
+
+		$ticket_data = array(
+			'entity_id' => $department_id,
+			'ticket_number' => $ticket_number,
+			'subject' => $subject,
+			'description' => $description,
+			'status' => 'new',
+			'priority' => $priority,
+			'customer_name' => $customer_name,
+			'customer_email' => $customer_email,
+			'customer_phone' => $customer_phone,
+			'created_by' => is_user_logged_in() ? get_current_user_id() : null,
+		);
+
+		$ticket_id = $ticket_model->create( $ticket_data );
+
+		if ( is_wp_error( $ticket_id ) ) {
+			wp_send_json_error( array( 'message' => $ticket_id->get_error_message() ) );
+		}
+
+		if ( ! $ticket_id ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to create ticket. Please try again.', 'multi-entity-ticket-system' ) ) );
+		}
+
+		// Get the created ticket for response
+		$ticket = $ticket_model->get( $ticket_id );
+
+		// Send success response with ticket info
+		wp_send_json_success( array(
+			'message' => __( 'Ticket created successfully!', 'multi-entity-ticket-system' ),
+			'ticket_id' => $ticket_id,
+			'ticket_number' => $ticket_number
+		) );
 	}
 }
