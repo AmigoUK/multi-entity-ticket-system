@@ -377,7 +377,7 @@
 			}
 			
 			// File size validation using actual PHP limits
-			var fileInput = $('#ticket_attachments')[0];
+			var fileInput = $('#mets_ticket_attachment')[0];
 			var maxFileSize = mets_public_ajax.upload_limits ? mets_public_ajax.upload_limits.max_file_size : (20 * 1024 * 1024); // Use PHP limit or fallback to 20MB
 			var maxFileSizeMB = mets_public_ajax.upload_limits ? mets_public_ajax.upload_limits.max_file_size_mb : 20;
 			var maxTotalSize = maxFileSize * 10; // Allow up to 10 files at max size
@@ -550,7 +550,7 @@
 		}
 
 		// File Upload Preview Functionality
-		$(document).on('change', '#ticket_attachments', function() {
+		$(document).on('change', '#mets_ticket_attachment', function() {
 			var files = this.files;
 			var fileList = $('.mets-file-list');
 			var filePreview = $('.mets-file-preview');
@@ -593,7 +593,7 @@
 		// Remove file functionality
 		$(document).on('click', '.mets-file-remove', function() {
 			var index = $(this).data('index');
-			var fileInput = $('#ticket_attachments')[0];
+			var fileInput = $('#mets_ticket_attachment')[0];
 			var files = Array.from(fileInput.files);
 			
 			// Remove the file at the specified index
