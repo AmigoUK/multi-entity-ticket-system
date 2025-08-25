@@ -625,6 +625,9 @@ class METS_Public {
 		// Get ticket
 		$ticket = $ticket_model->get( $ticket_id );
 		
+		// Debug: Check if ticket has customer data
+		error_log('[METS DEBUG] Ticket object: ' . print_r($ticket, true));
+		
 		// Verify user has access to this ticket
 		$current_user = wp_get_current_user();
 		if ( ! $ticket || $ticket->customer_email !== $current_user->user_email ) {
@@ -666,10 +669,21 @@ class METS_Public {
 				<div class="mets-info-grid">
 					<div class="mets-info-item">
 						<strong><?php echo esc_html__( 'Customer:', 'multi-entity-ticket-system' ); ?></strong>
-						<?php echo esc_html( $ticket->customer_name ); ?> (<?php echo esc_html( $ticket->customer_email ); ?>)
-						<?php if ( ! empty( $ticket->customer_phone ) ) : ?>
-							<br><small><?php echo esc_html__( 'Phone:', 'multi-entity-ticket-system' ); ?> <?php echo esc_html( $ticket->customer_phone ); ?></small>
-						<?php endif; ?>
+						<?php 
+						error_log('[METS DEBUG] Customer name: ' . $ticket->customer_name);
+						error_log('[METS DEBUG] Customer email: ' . $ticket->customer_email);
+						error_log('[METS DEBUG] Customer phone: ' . $ticket->customer_phone);
+						
+						// Check if customer data exists
+						if (!empty($ticket->customer_name) || !empty($ticket->customer_email)) {
+							echo esc_html( $ticket->customer_name ); ?> (<?php echo esc_html( $ticket->customer_email ); ?>)
+							<?php if ( ! empty( $ticket->customer_phone ) ) : ?>
+								<br><small><?php echo esc_html__( 'Phone:', 'multi-entity-ticket-system' ); ?> <?php echo esc_html( $ticket->customer_phone ); ?></small>
+							<?php endif;
+						} else {
+							echo '<em>' . esc_html__( 'Customer information not available', 'multi-entity-ticket-system' ) . '</em>';
+						}
+						?>
 					</div>
 					<div class="mets-info-item">
 						<strong><?php echo esc_html__( 'Status:', 'multi-entity-ticket-system' ); ?></strong>
