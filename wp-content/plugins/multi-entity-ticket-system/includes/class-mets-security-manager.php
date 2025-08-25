@@ -479,10 +479,10 @@ class METS_Security_Manager {
 		
 		$csp_directives = array(
 			"default-src 'self'",
-			"script-src 'self' 'nonce-{$nonce}' 'unsafe-inline'", // Remove unsafe-inline in production
+			"script-src 'self' 'unsafe-inline' 'unsafe-eval'",
 			"style-src 'self' 'unsafe-inline' fonts.googleapis.com",
 			"img-src 'self' data: https:",
-			"font-src 'self' fonts.gstatic.com",
+			"font-src 'self' data: fonts.gstatic.com https:",
 			"connect-src 'self'",
 			"form-action 'self'",
 			"frame-ancestors 'none'",
@@ -735,6 +735,10 @@ class METS_Security_Manager {
 	 * @since    1.0.0
 	 */
 	public function add_csp_meta() {
+		// Disabled to prevent conflicts with HTTP header CSP
+		// The CSP handler class now manages all CSP directives
+		return;
+		
 		global $pagenow;
 		if ( $pagenow === 'post.php' || $pagenow === 'post-new.php' ) {
 			return;
