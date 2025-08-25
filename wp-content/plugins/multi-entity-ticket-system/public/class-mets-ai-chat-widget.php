@@ -85,15 +85,18 @@ class METS_AI_Chat_Widget {
      */
     private function should_display_widget() {
         if (!$this->widget_settings['enabled']) {
+            error_log('[METS AI Chat] Widget is disabled');
             return false;
         }
         
         if (is_admin()) {
+            error_log('[METS AI Chat] Currently in admin area');
             return false;
         }
         
         // Check AI service availability
         if (!$this->ai_service->is_configured()) {
+            error_log('[METS AI Chat] AI service is not configured');
             return false;
         }
         
@@ -105,6 +108,7 @@ class METS_AI_Chat_Widget {
         if (!empty($excluded_pages)) {
             foreach ($excluded_pages as $excluded) {
                 if ($this->matches_page_rule($excluded, $current_page)) {
+                    error_log('[METS AI Chat] Current page is excluded');
                     return false;
                 }
             }
@@ -112,15 +116,18 @@ class METS_AI_Chat_Widget {
         
         // Check if current page is allowed
         if (in_array('all', $allowed_pages)) {
+            error_log('[METS AI Chat] Widget should be displayed on all pages');
             return true;
         }
         
         foreach ($allowed_pages as $allowed) {
             if ($this->matches_page_rule($allowed, $current_page)) {
+                error_log('[METS AI Chat] Widget matches allowed page rule');
                 return true;
             }
         }
         
+        error_log('[METS AI Chat] Widget not displayed - no matching page rules');
         return false;
     }
     
@@ -154,10 +161,14 @@ class METS_AI_Chat_Widget {
      * Enqueue frontend scripts and styles
      */
     public function enqueue_scripts() {
+        error_log('[METS AI Chat] enqueue_scripts called');
         // More permissive check for enqueuing - only check basic requirements
         if (!$this->widget_settings['enabled'] || is_admin() || !$this->ai_service->is_configured()) {
+            error_log('[METS AI Chat] Skipping enqueue - widget disabled, in admin, or AI not configured');
             return;
         }
+        
+        error_log('[METS AI Chat] Enqueuing scripts and styles');
         
         wp_enqueue_script(
             'mets-ai-chat-widget',
@@ -198,15 +209,7 @@ class METS_AI_Chat_Widget {
                 'name_required' => __('Please enter your name', 'multi-entity-ticket-system'),
                 'email_required' => __('Please enter your email', 'multi-entity-ticket-system'),
                 'entity_required' => __('Please select a department', 'multi-entity-ticket-system'),
-                'message_required' => __('Please enter a message', 'multi-entity-ticket-system'),
-                'ticket_created' => __('Support ticket created successfully!', 'multi-entity-ticket-system'),
-                'minimize' => __('Minimize chat', 'multi-entity-ticket-system'),
-                'maximize' => __('Open chat', 'multi-entity-ticket-system'),
-                'close' => __('Close chat', 'multi-entity-ticket-system'),
-                'new_conversation' => __('Start new conversation', 'multi-entity-ticket-system')
-            ),
-            'debug' => true,
-            'widget_loaded' => true
+            )
         ));
     }
     
@@ -214,9 +217,13 @@ class METS_AI_Chat_Widget {
      * Render the chat widget HTML
      */
     public function render_chat_widget() {
+        error_log('[METS AI Chat] render_chat_widget called');
         if (!$this->should_display_widget()) {
+            error_log('[METS AI Chat] should_display_widget returned false');
             return;
         }
+        
+        error_log('[METS AI Chat] Rendering chat widget');
         
         $position_class = 'mets-chat-' . str_replace('_', '-', $this->widget_settings['position']);
         $theme_class = 'mets-chat-theme-' . $this->widget_settings['theme'];
