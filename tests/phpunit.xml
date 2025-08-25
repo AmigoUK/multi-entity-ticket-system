@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.3/phpunit.xsd"
+    backupGlobals="false"
+    backupStaticAttributes="false"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    processIsolation="false"
+    stopOnFailure="false"
+    executionOrder="depends,defects"
+    cacheDirectory=".phpunit.cache"
+    bootstrap="bootstrap.php">
+    
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory>unit</directory>
+        </testsuite>
+        <testsuite name="Integration Tests">
+            <directory>integration</directory>
+        </testsuite>
+        <testsuite name="API Tests">
+            <directory>api</directory>
+        </testsuite>
+        <testsuite name="WordPress Integration">
+            <directory>wordpress</directory>
+        </testsuite>
+    </testsuites>
+    
+    <coverage>
+        <include>
+            <directory suffix=".php">../wp-content/plugins/multi-entity-ticket-system/includes</directory>
+            <directory suffix=".php">../wp-content/plugins/multi-entity-ticket-system/admin</directory>
+            <directory suffix=".php">../wp-content/plugins/multi-entity-ticket-system/public</directory>
+        </include>
+        <exclude>
+            <directory>../wp-content/plugins/multi-entity-ticket-system/vendor</directory>
+            <file>../wp-content/plugins/multi-entity-ticket-system/multi-entity-ticket-system.php</file>
+        </exclude>
+        <report>
+            <html outputDirectory="coverage-html"/>
+            <clover outputFile="coverage.xml"/>
+            <text outputFile="php://stdout" showUncoveredFiles="false"/>
+        </report>
+    </coverage>
+    
+    <php>
+        <const name="WP_TESTS_PHPUNIT_POLYFILLS_PATH" value="./vendor/yoast/phpunit-polyfills"/>
+        <server name="SERVER_NAME" value="localhost"/>
+    </php>
+    
+    <logging>
+        <testdoxText outputFile="testdox.txt"/>
+        <junit outputFile="test-results.xml"/>
+    </logging>
+</phpunit>

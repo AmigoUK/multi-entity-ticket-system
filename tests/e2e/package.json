@@ -1,0 +1,30 @@
+{
+  "name": "mets-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for METS Plugin",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "install-deps": "playwright install",
+    "test:chrome": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:safari": "playwright test --project=webkit",
+    "test:mobile": "playwright test --project=mobile-chrome",
+    "test:parallel": "playwright test --workers=4"
+  },
+  "keywords": ["e2e", "testing", "playwright", "wordpress", "mets"],
+  "author": "METS Development Team",
+  "license": "GPL-2.0",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "dependencies": {
+    "faker": "^5.5.3"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "mets/test-suite",
+  "description": "Test suite for Multi-Entity Ticket System WordPress Plugin",
+  "type": "project",
+  "require-dev": {
+    "phpunit/phpunit": "^9.5",
+    "yoast/phpunit-polyfills": "^1.0",
+    "wp-coding-standards/wpcs": "^2.3",
+    "phpmd/phpmd": "^2.13",
+    "phpstan/phpstan": "^1.10",
+    "squizlabs/php_codesniffer": "^3.7",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+    "phpunit/php-code-coverage": "^9.2",
+    "sebastian/phpcpd": "^6.0",
+    "phpmetrics/phpmetrics": "^2.8"
+  },
+  "scripts": {
+    "test": "phpunit --configuration phpunit.xml",
+    "test-coverage": "phpunit --configuration phpunit.xml --coverage-html coverage-html --coverage-text --coverage-clover coverage.xml",
+    "test-unit": "phpunit --configuration phpunit.xml --testsuite=\"Unit Tests\"",
+    "test-integration": "phpunit --configuration phpunit.xml --testsuite=\"Integration Tests\"",
+    "test-api": "phpunit --configuration phpunit.xml --testsuite=\"API Tests\"",
+    "test-wordpress": "phpunit --configuration phpunit.xml --testsuite=\"WordPress Integration\"",
+    "phpcs": "phpcs --standard=WordPress --extensions=php --ignore=vendor/ .",
+    "phpmd": "phpmd . text phpmd.xml --exclude vendor/",
+    "phpstan": "phpstan analyse --configuration=phpstan.neon --no-progress",
+    "phpcpd": "phpcpd --exclude vendor .",
+    "metrics": "phpmetrics --report-html=metrics-report .",
+    "quality": [
+      "@phpcs",
+      "@phpmd", 
+      "@phpstan",
+      "@phpcpd"
+    ],
+    "all-tests": [
+      "@test-coverage",
+      "@quality"
+    ]
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "METS\\Tests\\": "helpers/"
+    }
+  }
+}
