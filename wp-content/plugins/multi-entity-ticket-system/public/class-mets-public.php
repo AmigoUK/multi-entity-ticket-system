@@ -665,6 +665,13 @@ class METS_Public {
 			<div class="mets-ticket-info">
 				<div class="mets-info-grid">
 					<div class="mets-info-item">
+						<strong><?php echo esc_html__( 'Customer:', 'multi-entity-ticket-system' ); ?></strong>
+						<?php echo esc_html( $ticket->customer_name ); ?> (<?php echo esc_html( $ticket->customer_email ); ?>)
+						<?php if ( ! empty( $ticket->customer_phone ) ) : ?>
+							<br><small><?php echo esc_html__( 'Phone:', 'multi-entity-ticket-system' ); ?> <?php echo esc_html( $ticket->customer_phone ); ?></small>
+						<?php endif; ?>
+					</div>
+					<div class="mets-info-item">
 						<strong><?php echo esc_html__( 'Status:', 'multi-entity-ticket-system' ); ?></strong>
 						<span class="mets-status-badge mets-status-<?php echo esc_attr( $ticket->status ); ?>">
 							<?php echo esc_html( $status_label ); ?>
