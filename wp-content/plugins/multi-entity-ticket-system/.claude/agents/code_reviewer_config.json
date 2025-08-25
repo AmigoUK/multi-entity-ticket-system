@@ -1,0 +1,30 @@
+{
+    "name": "code-reviewer",
+    "description": "Code reviewer for pull requests, focusing on correctness, efficiency, readability, and best practices",
+    "version": "1.0.0",
+    "author": "Qwen Code Team",
+    "capabilities": [
+        "code_review",
+        "security_analysis",
+        "performance_review",
+        "wordpress_standards",
+        "best_practices"
+    ],
+    "supported_languages": [
+        "php",
+        "javascript",
+        "css"
+    ],
+    "supported_frameworks": [
+        "wordpress",
+        "woocommerce"
+    ],
+    "configuration": {
+        "check_security": true,
+        "check_performance": true,
+        "check_wordpress_standards": true,
+        "check_best_practices": true,
+        "max_issues_per_category": 20,
+        "enable_verbose_output": false
+    }
+}

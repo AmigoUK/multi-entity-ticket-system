@@ -1,0 +1,28 @@
+{
+    "name": "dx-optimizer",
+    "description": "Developer experience optimizer for improving workflow, tooling, and overall development experience",
+    "version": "1.0.0",
+    "author": "Qwen Code Team",
+    "capabilities": [
+        "environment_analysis",
+        "workflow_optimization",
+        "tooling_improvement",
+        "automation_enhancement",
+        "collaboration_optimization"
+    ],
+    "supported_environments": [
+        "wordpress",
+        "php",
+        "javascript",
+        "python"
+    ],
+    "configuration": {
+        "analyze_environment": true,
+        "optimize_workflow": true,
+        "improve_tooling": true,
+        "enhance_automation": true,
+        "optimize_collaboration": true,
+        "generate_reports": true,
+        "provide_recommendations": true
+    }
+}

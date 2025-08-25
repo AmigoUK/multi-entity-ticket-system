@@ -1,0 +1,107 @@
+#!/bin/bash
+#
+# Qwen Code DX Optimizer Agent Wrapper
+# Simplified interface for developer experience optimization
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENT_DIR="$SCRIPT_DIR/.claude/agents"
+PYTHON_PATH="/Applications/MAMP/bin/python/python3.10.15/bin/python3"
+
+# Check if Python is available
+if ! command -v python3 &> /dev/null && ! command -v "$PYTHON_PATH" &> /dev/null; then
+    echo "Error: Python 3 is required but not found."
+    echo "Please install Python 3 or adjust the PYTHON_PATH in this script."
+    exit 1
+fi
+
+# Use available Python
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+else
+    PYTHON_CMD="$PYTHON_PATH"
+fi
+
+# Show help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Qwen Code DX Optimizer Agent"
+    echo "Usage: ./optimize [options] <project_root>"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help     Show this help message"
+    echo "  -v, --verbose  Enable verbose output"
+    echo "  --report       Specify report output directory"
+    echo ""
+    echo "Examples:"
+    echo "  ./optimize /path/to/project"
+    echo "  ./optimize --report /path/to/reports /path/to/project"
+    echo "  ./optimize -v /path/to/project"
+    exit 0
+fi
+
+# Parse arguments
+VERBOSE=false
+REPORT_DIR="."
+PROJECT_ROOT=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        --report)
+            REPORT_DIR="$2"
+            shift 2
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information."
+            exit 1
+            ;;
+        *)
+            PROJECT_ROOT="$1"
+            shift
+            ;;
+    esac
+done
+
+# Check if project root is provided
+if [[ -z "$PROJECT_ROOT" ]]; then
+    echo "Error: No project root provided."
+    echo "Usage: ./optimize project_root"
+    echo "Use --help for more information."
+    exit 1
+fi
+
+# Check if project root exists
+if [[ ! -d "$PROJECT_ROOT" ]]; then
+    echo "Error: Project root '$PROJECT_ROOT' not found."
+    exit 1
+fi
+
+# Create report directory if it doesn't exist
+mkdir -p "$REPORT_DIR"
+
+# Run the DX optimizer agent
+echo "Running Qwen Code DX Optimizer Agent..."
+echo "Project root: $PROJECT_ROOT"
+echo "Report directory: $REPORT_DIR"
+echo ""
+
+# Execute the DX optimizer agent
+if [[ "$VERBOSE" == true ]]; then
+    "$PYTHON_CMD" "$AGENT_DIR/dx_optimizer_agent.py" "$PROJECT_ROOT"
+else
+    "$PYTHON_CMD" "$AGENT_DIR/dx_optimizer_agent.py" "$PROJECT_ROOT" 2>/dev/null
+fi
+
+# Check exit status
+if [[ $? -eq 0 ]]; then
+    echo ""
+    echo "DX optimization completed successfully."
+    echo "Check the generated report file for detailed analysis."
+else
+    echo ""
+    echo "DX optimization failed. Check the error output above."
+    exit 1
+fi

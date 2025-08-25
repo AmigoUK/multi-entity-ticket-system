@@ -1,0 +1,515 @@
+/**
+ * METS Mobile Navigation Styles
+ *
+ * @package    MultiEntityTicketSystem
+ * @subpackage MultiEntityTicketSystem/assets/css
+ * @since      1.0.0
+ */
+
+/* Mobile Navigation Toggle */
+.mets-mobile-nav-toggle {
+    display: none;
+    position: fixed;
+    top: 32px;
+    left: 160px;
+    z-index: 9999;
+    background: #23282d;
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.mets-mobile-nav-toggle:hover {
+    background: #32373c;
+}
+
+.mets-mobile-nav-toggle.active {
+    background: #0073aa;
+}
+
+/* Mobile Navigation Overlay */
+.mets-mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9998;
+    backdrop-filter: blur(2px);
+}
+
+/* Mobile Navigation Panel */
+.mets-mobile-nav-panel {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 320px;
+    height: 100%;
+    background: #23282d;
+    z-index: 9999;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.mets-mobile-nav-panel.active {
+    left: 0;
+}
+
+/* Mobile Navigation Header */
+.mets-mobile-nav-header {
+    background: #0073aa;
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #32373c;
+}
+
+.mets-mobile-nav-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.mets-mobile-nav-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.mets-mobile-nav-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Navigation Menu */
+.mets-mobile-nav-menu {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.mets-mobile-nav-menu li {
+    border-bottom: 1px solid #32373c;
+}
+
+.mets-mobile-nav-menu a {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #a0a5aa;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.mets-mobile-nav-menu a:hover,
+.mets-mobile-nav-menu a.current {
+    background: #32373c;
+    color: #0073aa;
+}
+
+.mets-mobile-nav-menu .dashicons {
+    margin-right: 12px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Sub Menu */
+.mets-mobile-nav-submenu {
+    background: #1d2327;
+    border-top: 1px solid #32373c;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.mets-mobile-nav-submenu a {
+    padding-left: 50px;
+    font-size: 13px;
+}
+
+/* Quick Actions Section */
+.mets-mobile-quick-actions {
+    padding: 20px;
+    background: #1d2327;
+    border-top: 1px solid #32373c;
+}
+
+.mets-mobile-quick-actions h4 {
+    color: #a0a5aa;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin: 0 0 15px 0;
+    letter-spacing: 0.5px;
+}
+
+.mets-quick-action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.mets-quick-action-btn {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 12px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.mets-quick-action-btn:hover {
+    background: #005a87;
+    color: white;
+}
+
+.mets-quick-action-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Floating Action Button (FAB) */
+.mets-fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #0073aa;
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.mets-fab:hover {
+    background: #005a87;
+    transform: scale(1.1);
+}
+
+.mets-fab:active {
+    transform: scale(0.95);
+}
+
+/* FAB Menu */
+.mets-fab-menu {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    z-index: 999;
+    display: none;
+}
+
+.mets-fab-menu.active {
+    display: block;
+}
+
+.mets-fab-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fabItemSlideIn 0.3s ease forwards;
+}
+
+.mets-fab-item:nth-child(1) { animation-delay: 0.1s; }
+.mets-fab-item:nth-child(2) { animation-delay: 0.2s; }
+.mets-fab-item:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes fabItemSlideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mets-fab-item-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #32373c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.mets-fab-item-btn:hover {
+    background: #0073aa;
+    color: white;
+    transform: scale(1.1);
+}
+
+.mets-fab-item-label {
+    background: #23282d;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-right: 12px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+}
+
+.mets-fab-item:hover .mets-fab-item-label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Breadcrumb Navigation */
+.mets-mobile-breadcrumb {
+    display: none;
+    background: #f1f1f1;
+    padding: 12px 20px;
+    border-bottom: 1px solid #ccd0d4;
+    font-size: 13px;
+}
+
+.mets-mobile-breadcrumb a {
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.mets-mobile-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.mets-mobile-breadcrumb .separator {
+    margin: 0 8px;
+    color: #666;
+}
+
+/* Status Indicators */
+.mets-mobile-status-bar {
+    background: #f9f9f9;
+    padding: 8px 20px;
+    border-bottom: 1px solid #ccd0d4;
+    display: none;
+    align-items: center;
+    gap: 15px;
+    font-size: 12px;
+}
+
+.mets-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mets-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #00a32a;
+}
+
+.mets-status-dot.warning { background: #dba617; }
+.mets-status-dot.error { background: #d63638; }
+.mets-status-dot.offline { background: #8c8f94; }
+
+/* Touch Improvements */
+@media (hover: none) and (pointer: coarse) {
+    .mets-mobile-nav-menu a {
+        padding: 18px 20px;
+    }
+    
+    .mets-quick-action-btn {
+        padding: 15px 8px;
+    }
+    
+    .mets-fab {
+        width: 64px;
+        height: 64px;
+        font-size: 28px;
+    }
+}
+
+/* Responsive Breakpoints */
+@media screen and (max-width: 1024px) {
+    .mets-mobile-nav-toggle {
+        display: block;
+    }
+    
+    .mets-mobile-breadcrumb {
+        display: block;
+    }
+    
+    .mets-mobile-status-bar {
+        display: flex;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .mets-mobile-nav-toggle {
+        left: 20px;
+        top: 46px;
+    }
+    
+    .mets-fab {
+        display: flex;
+    }
+    
+    /* Hide WordPress admin menu on mobile */
+    #adminmenu,
+    #adminmenumain {
+        display: none !important;
+    }
+    
+    /* Adjust content area */
+    #wpcontent {
+        margin-left: 0 !important;
+    }
+    
+    .auto-fold #wpcontent {
+        margin-left: 0 !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .mets-mobile-nav-panel {
+        width: 100%;
+        left: -100%;
+    }
+    
+    .mets-quick-action-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .mets-fab {
+        bottom: 15px;
+        right: 15px;
+        width: 52px;
+        height: 52px;
+        font-size: 22px;
+    }
+    
+    .mets-fab-menu {
+        bottom: 80px;
+        right: 15px;
+    }
+}
+
+/* Animation Classes */
+.mets-nav-slide-in {
+    animation: slideInLeft 0.3s ease;
+}
+
+.mets-nav-slide-out {
+    animation: slideOutLeft 0.3s ease;
+}
+
+@keyframes slideInLeft {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+@keyframes slideOutLeft {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+}
+
+/* Loading States */
+.mets-mobile-nav-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #a0a5aa;
+}
+
+.mets-mobile-nav-loading .spinner {
+    float: none;
+    margin: 0 10px 0 0;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .mets-mobile-breadcrumb {
+        background: #1d2327;
+        border-color: #3c434a;
+        color: #c9c9ca;
+    }
+    
+    .mets-mobile-status-bar {
+        background: #1d2327;
+        border-color: #3c434a;
+        color: #c9c9ca;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .mets-mobile-nav-panel {
+        border: 2px solid #fff;
+    }
+    
+    .mets-mobile-nav-menu a {
+        border-bottom: 1px solid #fff;
+    }
+    
+    .mets-fab {
+        border: 2px solid #fff;
+    }
+}
+
+/* Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+    .mets-mobile-nav-panel,
+    .mets-mobile-nav-toggle,
+    .mets-quick-action-btn,
+    .mets-fab,
+    .mets-fab-item-btn {
+        transition: none;
+    }
+    
+    .mets-fab-item {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}

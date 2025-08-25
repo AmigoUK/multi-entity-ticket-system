@@ -1,0 +1,186 @@
+/* Custom CSS fixes for n8n chat widget - addressing known input textarea bugs */
+
+/* CRITICAL FIX: Make header much smaller - 1/6 of current height */
+.chat-layout .chat-header,
+.chat-header,
+#n8n-chat .chat-header {
+    height: 60px !important; /* Much smaller than default auto height */
+    min-height: 60px !important;
+    max-height: 60px !important;
+    padding: 8px 16px !important; /* Reduced padding */
+    gap: 4px !important; /* Smaller gap between elements */
+    overflow: hidden !important;
+}
+
+/* Make header title smaller */
+.chat-layout .chat-header h1,
+.chat-header h1 {
+    font-size: 1.2rem !important; /* Much smaller than default 2em */
+    margin: 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Make header subtitle smaller */
+.chat-layout .chat-header p,
+.chat-header p {
+    font-size: 0.8rem !important; /* Much smaller */
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Ensure close button fits in compact header */
+.chat-close-button,
+.chat-heading .chat-close-button {
+    font-size: 16px !important;
+    padding: 4px !important;
+    min-width: auto !important;
+    height: auto !important;
+}
+
+/* Make sure header content is properly aligned */
+.chat-heading {
+    align-items: flex-start !important;
+    min-height: auto !important;
+}
+
+/* Make "Powered by n8n" text much smaller */
+.chat-powered-by,
+.chat-powered-by a {
+    font-size: 10px !important;
+    opacity: 0.6;
+    line-height: 1.2;
+}
+
+/* CRITICAL FIXES for missing input textarea - based on known n8n bugs */
+
+/* Force input area to be visible and properly styled */
+.chat-input,
+.chat-input-area,
+[class*="chat-input"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    min-height: 60px !important;
+    flex-direction: column !important;
+}
+
+.chat-inputs {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    align-items: flex-end !important;
+    padding: 8px !important;
+}
+
+/* Force textarea to be visible - key fix for n8n input bug */
+.chat-inputs textarea,
+textarea[placeholder*="Type"],
+textarea[placeholder*="Enter"],
+input[type="text"],
+.chat-message-input,
+[class*="textarea"],
+[class*="input"]:not([type="hidden"]) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 50px !important;
+    width: 100% !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    resize: vertical !important;
+    background: white !important;
+    color: #333 !important;
+    box-sizing: border-box !important;
+}
+
+/* Fix for Vue.js scoped CSS issues */
+.chat-input[data-v-de5e7961],
+.chat-inputs[data-v-de5e7961] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 60px !important;
+    padding: 10px !important;
+}
+
+.chat-inputs[data-v-de5e7961] textarea {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Force send button to be visible */
+.chat-input-send-button,
+.chat-input-file-button,
+[class*="send-button"],
+[class*="chat-button"] {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+}
+
+/* Force footer to be visible and better positioned */
+.chat-footer,
+.chat-layout .chat-footer {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: #f5f5f5 !important;
+    border-top: 1px solid #eee !important;
+    min-height: 80px !important; /* Slightly taller for better visibility */
+    position: relative !important;
+    flex-shrink: 0 !important; /* Don't let footer shrink */
+    padding: 8px !important;
+}
+
+/* Fix for widget height and container issues */
+.chat-window,
+.chat-layout,
+#n8n-chat {
+    height: 600px !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Make chat body take up more space now that header is smaller */
+.chat-body,
+.chat-layout .chat-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    min-height: 0 !important; /* Allow flexbox to shrink */
+    height: auto !important;
+}
+
+/* Ensure messages list uses available space efficiently */
+.chat-messages-list {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-end !important;
+}
+
+/* Placeholder text styling */
+textarea::placeholder,
+input::placeholder {
+    color: #999 !important;
+    opacity: 1 !important;
+}
+
+/* Additional debug styles - shows bright background if input area appears */
+.chat-input:empty:before {
+    content: "DEBUG: Input area should appear here" !important;
+    background: yellow !important;
+    color: red !important;
+    padding: 10px !important;
+    display: block !important;
+}

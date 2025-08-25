@@ -1,0 +1,273 @@
+/**
+ * METS Notification Styles
+ * 
+ * Styles for the AJAX polling notification system
+ * 
+ * @since 1.0.0
+ */
+
+/* Notification Container */
+.mets-notification-container {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    z-index: 99999;
+    max-width: 400px;
+    pointer-events: none;
+}
+
+@media screen and (max-width: 782px) {
+    .mets-notification-container {
+        top: 46px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* Individual Notification */
+.mets-notification {
+    background: #fff;
+    border-left: 4px solid #2271b1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    margin-bottom: 10px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.mets-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.mets-notification:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+}
+
+/* Notification Content */
+.mets-notification-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 16px;
+    position: relative;
+}
+
+/* Notification Icon */
+.mets-notification-icon {
+    flex-shrink: 0;
+    margin-right: 12px;
+    color: #2271b1;
+}
+
+.mets-notification-icon .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+/* Notification Text */
+.mets-notification-text {
+    flex-grow: 1;
+    margin-right: 24px;
+}
+
+.mets-notification-message {
+    color: #1d2327;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.mets-notification-time {
+    color: #787c82;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Close Button */
+.mets-notification-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #787c82;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.mets-notification-close:hover {
+    color: #1d2327;
+}
+
+.mets-notification-close:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: -2px;
+}
+
+/* Notification Types */
+.mets-notification[data-type="new_ticket"] {
+    border-left-color: #00a32a;
+}
+
+.mets-notification[data-type="new_ticket"] .mets-notification-icon {
+    color: #00a32a;
+}
+
+.mets-notification[data-type="ticket_assigned"] {
+    border-left-color: #3858e9;
+}
+
+.mets-notification[data-type="ticket_assigned"] .mets-notification-icon {
+    color: #3858e9;
+}
+
+.mets-notification[data-type="new_reply"] {
+    border-left-color: #f0b849;
+}
+
+.mets-notification[data-type="new_reply"] .mets-notification-icon {
+    color: #f0b849;
+}
+
+.mets-notification[data-type="status_changed"] {
+    border-left-color: #8757c0;
+}
+
+.mets-notification[data-type="status_changed"] .mets-notification-icon {
+    color: #8757c0;
+}
+
+/* Notification Badge */
+.mets-notification-badge {
+    display: inline-block;
+    background: #d63638;
+    color: #fff;
+    font-size: 11px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+    font-weight: 600;
+    vertical-align: top;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Admin Bar Integration */
+#wp-admin-bar-mets-notifications .ab-icon:before {
+    content: '\f486';
+    top: 2px;
+}
+
+#wp-admin-bar-mets-notifications .mets-notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 14px;
+    height: 14px;
+    line-height: 14px;
+    padding: 0 4px;
+    font-size: 9px;
+}
+
+/* Notification List (for dropdown) */
+.mets-notification-list {
+    max-height: 400px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mets-notification-list-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f1;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mets-notification-list-item:hover {
+    background-color: #f6f7f7;
+}
+
+.mets-notification-list-item:last-child {
+    border-bottom: none;
+}
+
+.mets-notification-list-empty {
+    padding: 24px;
+    text-align: center;
+    color: #787c82;
+}
+
+/* Mark All Read Link */
+.mets-mark-all-read {
+    display: block;
+    padding: 8px 16px;
+    background: #f6f7f7;
+    border-top: 1px solid #dcdcde;
+    text-align: center;
+    color: #2271b1;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.mets-mark-all-read:hover {
+    background: #f0f0f1;
+    color: #135e96;
+}
+
+/* Loading State */
+.mets-notification-loading {
+    text-align: center;
+    padding: 20px;
+    color: #787c82;
+}
+
+.mets-notification-loading .spinner {
+    float: none;
+    margin: 0 auto 10px;
+}
+
+/* Animation for notification entry */
+@keyframes mets-notification-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 600px) {
+    .mets-notification {
+        margin-bottom: 8px;
+    }
+    
+    .mets-notification-content {
+        padding: 10px 12px;
+    }
+    
+    .mets-notification-message {
+        font-size: 13px;
+    }
+    
+    .mets-notification-time {
+        font-size: 11px;
+    }
+}

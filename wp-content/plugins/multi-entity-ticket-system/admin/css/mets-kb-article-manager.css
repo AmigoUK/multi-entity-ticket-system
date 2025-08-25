@@ -1,0 +1,502 @@
+/**
+ * Enhanced KB Article Manager Styles
+ *
+ * @package    MultiEntityTicketSystem
+ * @subpackage MultiEntityTicketSystem/admin/css
+ * @since      2.0.0
+ */
+
+/* =============================================================================
+   Status Indicator
+   ============================================================================= */
+.mets-kb-status {
+    position: fixed;
+    top: 32px;
+    right: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.mets-kb-status .status-text {
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.mets-kb-status .spinner {
+    float: none;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.mets-kb-status.saving {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.mets-kb-status.saved {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.mets-kb-status.error {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* =============================================================================
+   Form Enhancements
+   ============================================================================= */
+.mets-kb-article-wrap {
+    position: relative;
+}
+
+.mets-kb-article-wrap .wp-heading-inline {
+    margin-bottom: 10px;
+}
+
+/* Title field */
+#titlewrap {
+    position: relative;
+}
+
+#title {
+    font-size: 1.7em;
+    line-height: 1.3;
+    margin: 0;
+    padding: 3px 8px;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s ease;
+}
+
+#title:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+/* Validation messages */
+.validation-message {
+    display: none;
+    margin-top: 5px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.validation-message.error {
+    background: #fff2f2;
+    border: 1px solid #dc3232;
+    color: #dc3232;
+}
+
+.validation-message.success {
+    background: #f0fff4;
+    border: 1px solid #46b450;
+    color: #46b450;
+}
+
+/* Character counters */
+.character-count {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.character-count.over-limit {
+    color: #dc3232;
+    font-weight: bold;
+}
+
+/* =============================================================================
+   Entity & Categories
+   ============================================================================= */
+.kb-field-group {
+    margin-bottom: 15px;
+}
+
+.kb-field-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.kb-field-group select,
+.kb-field-group input,
+.kb-field-group textarea {
+    width: 100%;
+    max-width: 100%;
+}
+
+.categories-checklist {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 8px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.category-item {
+    display: block;
+    padding: 4px 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.category-item:hover {
+    background: #f9f9f9;
+}
+
+.category-item input[type="checkbox"] {
+    margin-right: 8px;
+    width: auto;
+}
+
+.no-categories {
+    color: #666;
+    font-style: italic;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+}
+
+.loading-indicator {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.loading-indicator .spinner {
+    float: none;
+    margin-right: 8px;
+}
+
+/* =============================================================================
+   Tags
+   ============================================================================= */
+#article_tags {
+    min-height: 60px;
+    resize: vertical;
+}
+
+.popular-tags {
+    margin-top: 10px;
+}
+
+.add-tag-button {
+    margin: 2px 4px 2px 0;
+    font-size: 12px;
+    padding: 2px 8px;
+    line-height: 1.4;
+}
+
+.add-tag-button:hover {
+    background: #0073aa;
+    color: #fff;
+}
+
+/* =============================================================================
+   File Uploads & Attachments
+   ============================================================================= */
+#article_attachments {
+    width: 100%;
+    padding: 8px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+#article_attachments:hover {
+    border-color: #0073aa;
+    background: #f0f8ff;
+}
+
+.upload-progress {
+    margin-top: 15px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0073aa, #005a87);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.attachment-item:hover {
+    background: #f9f9f9;
+    border-color: #0073aa;
+}
+
+.attachment-name {
+    flex: 1;
+    font-weight: 500;
+    margin-right: 10px;
+}
+
+.attachment-size {
+    color: #666;
+    font-size: 12px;
+    margin-right: 10px;
+}
+
+.delete-attachment {
+    font-size: 11px;
+    padding: 2px 6px;
+    line-height: 1.4;
+}
+
+.no-attachments {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 15px;
+    margin: 0;
+}
+
+/* =============================================================================
+   SEO Settings
+   ============================================================================= */
+#meta_title,
+#meta_description {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+#meta_description {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* =============================================================================
+   Responsive Design
+   ============================================================================= */
+@media screen and (max-width: 782px) {
+    .mets-kb-status {
+        position: static;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    
+    #title {
+        font-size: 1.4em;
+    }
+    
+    .categories-checklist {
+        max-height: 150px;
+    }
+    
+    .popular-tags .add-tag-button {
+        display: block;
+        width: 100%;
+        margin: 4px 0;
+        text-align: left;
+    }
+    
+    .attachment-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .attachment-name,
+    .attachment-size {
+        margin-bottom: 5px;
+    }
+}
+
+/* =============================================================================
+   WordPress Admin Compatibility
+   ============================================================================= */
+.wp-core-ui .button-primary.disabled,
+.wp-core-ui .button-primary:disabled,
+.wp-core-ui .button-primary[disabled] {
+    opacity: 0.6 !important;
+}
+
+/* Postbox improvements */
+.postbox .inside {
+    padding: 12px;
+}
+
+.postbox .postbox-header h2 {
+    font-size: 14px;
+    padding: 8px 12px;
+}
+
+/* Form field spacing */
+.form-table th {
+    width: 120px;
+    padding-top: 15px;
+}
+
+.form-table td {
+    padding-top: 10px;
+}
+
+/* Description text */
+.description {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* =============================================================================
+   Animations & Transitions
+   ============================================================================= */
+.mets-kb-article-wrap * {
+    box-sizing: border-box;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { max-height: 0; opacity: 0; }
+    to { max-height: 200px; opacity: 1; }
+}
+
+/* Loading states */
+.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 1;
+}
+
+/* =============================================================================
+   WordPress Editor Integration
+   ============================================================================= */
+.mce-container {
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+}
+
+.mce-toolbar-grp {
+    border-bottom: 1px solid #e5e5e5 !important;
+}
+
+.mce-edit-area {
+    border: none !important;
+}
+
+/* =============================================================================
+   Dark Mode Support (for future WordPress versions)
+   ============================================================================= */
+@media (prefers-color-scheme: dark) {
+    .mets-kb-status {
+        background: #1e1e1e;
+        border-color: #3c434a;
+        color: #f0f0f1;
+    }
+    
+    .mets-kb-status.saving {
+        background: #5c4107;
+        border-color: #8a6914;
+        color: #f9f9f9;
+    }
+    
+    .mets-kb-status.saved {
+        background: #0f4d14;
+        border-color: #1a7c23;
+        color: #f0f6ff;
+    }
+    
+    .mets-kb-status.error {
+        background: #4a1a1a;
+        border-color: #8b2635;
+        color: #f0f0f1;
+    }
+    
+    .categories-checklist,
+    .attachment-item {
+        background: #1e1e1e;
+        border-color: #3c434a;
+        color: #f0f0f1;
+    }
+    
+    .category-item:hover,
+    .attachment-item:hover {
+        background: #2c2c2c;
+    }
+}
+
+/* =============================================================================
+   Print Styles
+   ============================================================================= */
+@media print {
+    .mets-kb-status,
+    .postbox-container,
+    #publishing-action,
+    #delete-action,
+    .add-tag-button,
+    .delete-attachment,
+    .upload-progress {
+        display: none !important;
+    }
+    
+    .mets-kb-article-wrap {
+        max-width: none !important;
+    }
+    
+    #post-body-content {
+        margin: 0 !important;
+    }
+}

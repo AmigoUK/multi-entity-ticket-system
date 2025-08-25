@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# Qwen Code Docs Architect Agent Wrapper
+# Simplified interface for documentation generation
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENT_DIR="$SCRIPT_DIR/.claude/agents"
+PYTHON_PATH="/Applications/MAMP/bin/python/python3.10.15/bin/python3"
+
+# Check if Python is available
+if ! command -v python3 &> /dev/null && ! command -v "$PYTHON_PATH" &> /dev/null; then
+    echo "Error: Python 3 is required but not found."
+    echo "Please install Python 3 or adjust the PYTHON_PATH in this script."
+    exit 1
+fi
+
+# Use available Python
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+else
+    PYTHON_CMD="$PYTHON_PATH"
+fi
+
+# Show help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Qwen Code Docs Architect Agent"
+    echo "Usage: ./document [options] <file_path>"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help     Show this help message"
+    echo "  --format       Output format (markdown, html, pdf)"
+    echo "  --output       Specify output directory"
+    echo ""
+    echo "Examples:"
+    echo "  ./document class-mets-public.php"
+    echo "  ./document --format html class-mets-public.php"
+    echo "  ./document --output docs/ class-mets-public.php"
+    exit 0
+fi
+
+# Parse arguments
+FORMAT="markdown"
+OUTPUT_DIR="."
+FILE_PATH=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --format)
+            FORMAT="$2"
+            shift 2
+            ;;
+        --output)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information."
+            exit 1
+            ;;
+        *)
+            FILE_PATH="$1"
+            shift
+            ;;
+    esac
+done
+
+# Check if file path is provided
+if [[ -z "$FILE_PATH" ]]; then
+    echo "Error: No file path provided."
+    echo "Usage: ./document file_path"
+    echo "Use --help for more information."
+    exit 1
+fi
+
+# Check if file exists
+if [[ ! -f "$FILE_PATH" ]]; then
+    echo "Error: File '$FILE_PATH' not found."
+    exit 1
+fi
+
+# Create output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Run the docs architect agent
+echo "Running Qwen Code Docs Architect Agent..."
+echo "File: $FILE_PATH"
+echo "Format: $FORMAT"
+echo "Output directory: $OUTPUT_DIR"
+echo ""
+
+# Execute the docs architect agent
+"$PYTHON_CMD" "$AGENT_DIR/docs_architect_agent.py" "$FILE_PATH" "$FORMAT"
+
+# Check exit status
+if [[ $? -eq 0 ]]; then
+    echo ""
+    echo "Documentation generated successfully."
+    echo "Check the generated documentation file."
+else
+    echo ""
+    echo "Documentation generation failed. Check the error output above."
+    exit 1
+fi

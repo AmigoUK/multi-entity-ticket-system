@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# Qwen Code Debugger Agent Wrapper
+# Simplified interface for debugging errors
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AGENT_DIR="$SCRIPT_DIR/.claude/agents"
+PYTHON_PATH="/Applications/MAMP/bin/python/python3.10.15/bin/python3"  # Adjust as needed
+
+# Check if Python is available
+if ! command -v python3 &> /dev/null && ! command -v "$PYTHON_PATH" &> /dev/null; then
+    echo "Error: Python 3 is required but not found."
+    echo "Please install Python 3 or adjust the PYTHON_PATH in this script."
+    exit 1
+fi
+
+# Use available Python
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+else
+    PYTHON_CMD="$PYTHON_PATH"
+fi
+
+# Show help
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Qwen Code Debugger Agent"
+    echo "Usage: ./debug [options] <error_file>"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help     Show this help message"
+    echo "  -v, --verbose  Enable verbose output"
+    echo "  --project      Specify project root directory"
+    echo ""
+    echo "Examples:"
+    echo "  ./debug error.log"
+    echo "  ./debug --project /path/to/project error.log"
+    echo "  ./debug -v error.log"
+    exit 0
+fi
+
+# Parse arguments
+VERBOSE=false
+PROJECT_ROOT="."
+ERROR_FILE=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        --project)
+            PROJECT_ROOT="$2"
+            shift 2
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information."
+            exit 1
+            ;;
+        *)
+            ERROR_FILE="$1"
+            shift
+            ;;
+    esac
+done
+
+# Check if error file is provided
+if [[ -z "$ERROR_FILE" ]]; then
+    echo "Error: No error file provided."
+    echo "Usage: ./debug error.log"
+    echo "Use --help for more information."
+    exit 1
+fi
+
+# Check if error file exists
+if [[ ! -f "$ERROR_FILE" ]]; then
+    echo "Error: Error file '$ERROR_FILE' not found."
+    exit 1
+fi
+
+# Run the debugger agent
+echo "Running Qwen Code Debugger Agent..."
+echo "Error file: $ERROR_FILE"
+echo "Project root: $PROJECT_ROOT"
+echo ""
+
+# Execute the debugger agent
+if [[ "$VERBOSE" == true ]]; then
+    "$PYTHON_CMD" "$AGENT_DIR/debugger_agent.py" "$ERROR_FILE" "$PROJECT_ROOT"
+else
+    "$PYTHON_CMD" "$AGENT_DIR/debugger_agent.py" "$ERROR_FILE" "$PROJECT_ROOT" 2>/dev/null
+fi
+
+# Check exit status
+if [[ $? -eq 0 ]]; then
+    echo ""
+    echo "Debugging completed successfully."
+    echo "Check the generated report file for detailed analysis."
+else
+    echo ""
+    echo "Debugging failed. Check the error output above."
+    exit 1
+fi

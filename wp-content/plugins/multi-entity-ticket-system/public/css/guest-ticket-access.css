@@ -1,0 +1,244 @@
+/**
+ * Guest Ticket Access Styles
+ *
+ * @package    MultiEntityTicketSystem
+ * @subpackage MultiEntityTicketSystem/public/css
+ * @since      1.0.0
+ */
+
+/* Guest Access Wrapper */
+.mets-guest-access-wrapper {
+	max-width: 100%;
+	margin: 0;
+	padding: 0;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	background-color: #f5f5f5;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Guest Access Header */
+.mets-guest-access-header {
+	background: linear-gradient(135deg, #007cba 0%, #005a87 100%);
+	color: white;
+	padding: 2rem 1rem;
+	text-align: center;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.mets-guest-access-header h1 {
+	margin: 0 0 0.5rem 0;
+	font-size: 2rem;
+	font-weight: 600;
+}
+
+.mets-guest-access-header h2 {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 400;
+	opacity: 0.9;
+}
+
+/* Guest Access Main Content */
+.mets-guest-access-main {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 2rem 1rem;
+}
+
+/* Messages */
+.mets-guest-access-error,
+.mets-guest-access-success {
+	padding: 1rem 1.5rem;
+	border-radius: 6px;
+	margin-bottom: 1.5rem;
+	max-width: 500px;
+	width: 100%;
+	text-align: center;
+	font-weight: 500;
+}
+
+.mets-guest-access-error {
+	background-color: #f8d7da;
+	color: #721c24;
+	border: 1px solid #f5c6cb;
+}
+
+.mets-guest-access-success {
+	background-color: #d4edda;
+	color: #155724;
+	border: 1px solid #c3e6cb;
+}
+
+/* Form Container */
+.mets-guest-access-form-container {
+	background: white;
+	border-radius: 10px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+	padding: 2rem;
+	max-width: 500px;
+	width: 100%;
+	margin-bottom: 2rem;
+}
+
+/* Form Title */
+.mets-guest-access-form-container h2 {
+	margin: 0 0 1.5rem 0;
+	color: #333;
+	font-size: 1.5rem;
+	font-weight: 600;
+	text-align: center;
+}
+
+/* Form Groups */
+.mets-form-group {
+	margin-bottom: 1.5rem;
+}
+
+.mets-form-group label {
+	display: block;
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+	color: #333;
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.mets-form-group input {
+	width: 100%;
+	padding: 0.75rem 1rem;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	font-size: 1rem;
+	transition: border-color 0.3s ease, box-shadow 0.3s ease;
+	box-sizing: border-box;
+}
+
+.mets-form-group input:focus {
+	outline: none;
+	border-color: #007cba;
+	box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.1);
+}
+
+.mets-form-group .required {
+	color: #d63638;
+}
+
+/* Form Actions */
+.mets-form-actions {
+	text-align: center;
+	margin-top: 2rem;
+}
+
+.mets-submit-button {
+	background: linear-gradient(135deg, #007cba 0%, #005a87 100%);
+	color: white;
+	border: none;
+	padding: 0.875rem 1.75rem;
+	font-size: 1rem;
+	font-weight: 600;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	width: 100%;
+	box-shadow: 0 2px 6px rgba(0, 124, 186, 0.2);
+	min-height: 44px;
+}
+
+.mets-submit-button:hover:not(:disabled) {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 124, 186, 0.3);
+}
+
+.mets-submit-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+
+/* Guest Access Info */
+.mets-guest-access-info {
+	background: #f8f9fa;
+	border: 1px solid #e9ecef;
+	border-radius: 8px;
+	padding: 1.5rem;
+	max-width: 500px;
+	width: 100%;
+}
+
+.mets-guest-access-info p {
+	margin: 0 0 1rem 0;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: #666;
+}
+
+.mets-guest-access-info p:last-child {
+	margin-bottom: 0;
+}
+
+.mets-guest-access-info p strong {
+	color: #333;
+}
+
+/* Guest Access Footer */
+.mets-guest-access-footer {
+	background: #333;
+	color: white;
+	padding: 1rem;
+	text-align: center;
+	font-size: 0.875rem;
+}
+
+/* Shortcode Version */
+.mets-guest-access-shortcode-wrapper {
+	max-width: 500px;
+	margin: 0 auto;
+	padding: 1rem;
+}
+
+.mets-guest-access-shortcode-wrapper h2 {
+	margin: 0 0 1.5rem 0;
+	color: #333;
+	font-size: 1.5rem;
+	font-weight: 600;
+	text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+	.mets-guest-access-header h1 {
+		font-size: 1.5rem;
+	}
+	
+	.mets-guest-access-header h2 {
+		font-size: 1.25rem;
+	}
+	
+	.mets-guest-access-form-container {
+		padding: 1.5rem;
+	}
+	
+	.mets-guest-access-info {
+		padding: 1rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.mets-guest-access-header {
+		padding: 1.5rem 1rem;
+	}
+	
+	.mets-guest-access-main {
+		padding: 1rem;
+	}
+	
+	.mets-guest-access-form-container {
+		padding: 1rem;
+	}
+}

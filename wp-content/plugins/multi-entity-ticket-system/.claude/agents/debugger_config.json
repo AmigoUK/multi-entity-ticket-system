@@ -1,0 +1,29 @@
+{
+    "name": "debugger",
+    "description": "Debugging specialist for errors, test failures, and unexpected behavior",
+    "version": "1.0.0",
+    "author": "Qwen Code Team",
+    "capabilities": [
+        "error_analysis",
+        "root_cause_diagnosis",
+        "code_fix_generation",
+        "testing_strategy",
+        "prevention_recommendations"
+    ],
+    "supported_languages": [
+        "php",
+        "javascript",
+        "python"
+    ],
+    "supported_frameworks": [
+        "wordpress",
+        "laravel",
+        "django"
+    ],
+    "configuration": {
+        "max_debug_depth": 5,
+        "enable_verbose_logging": false,
+        "auto_fix_generation": true,
+        "suggest_prevention": true
+    }
+}

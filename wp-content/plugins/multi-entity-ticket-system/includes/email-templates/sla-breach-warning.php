@@ -1,0 +1,152 @@
+<?php
+/**
+ * Email Template: SLA Breach Warning
+ *
+ * @package    MultiEntityTicketSystem
+ * @subpackage MultiEntityTicketSystem/includes/email-templates
+ * @since      1.0.0
+ */
+
+// Prevent direct access
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SLA Warning - Ticket {{ticket_number_safe}}</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			line-height: 1.6;
+			color: #333;
+			max-width: 600px;
+			margin: 0 auto;
+			padding: 20px;
+		}
+		.header {
+			background: #f57c00;
+			color: white;
+			padding: 20px;
+			text-align: center;
+			border-radius: 8px 8px 0 0;
+		}
+		.content {
+			background: #f9f9f9;
+			padding: 30px;
+			border: 1px solid #ddd;
+		}
+		.warning-box {
+			background: #fff3e0;
+			padding: 20px;
+			border-radius: 8px;
+			margin: 20px 0;
+			border-left: 4px solid #f57c00;
+		}
+		.ticket-info {
+			background: white;
+			padding: 20px;
+			border-radius: 8px;
+			margin: 20px 0;
+			border: 1px solid #ddd;
+		}
+		.footer {
+			background: #f5f5f5;
+			padding: 20px;
+			text-align: center;
+			border-radius: 0 0 8px 8px;
+			font-size: 14px;
+			color: #666;
+		}
+		.button {
+			display: inline-block;
+			background: #f57c00;
+			color: white;
+			padding: 12px 24px;
+			text-decoration: none;
+			border-radius: 4px;
+			margin: 20px 0;
+		}
+		.urgent {
+			color: #d63638;
+			font-weight: bold;
+		}
+		.time-remaining {
+			font-size: 18px;
+			color: #f57c00;
+			font-weight: bold;
+			text-align: center;
+			background: white;
+			padding: 15px;
+			border-radius: 4px;
+			margin: 15px 0;
+		}
+	</style>
+</head>
+<body>
+	<div class="header">
+		<h1>⚠️ SLA Warning</h1>
+		<h2>{{entity_name_safe}}</h2>
+	</div>
+
+	<div class="content">
+		<div class="warning-box">
+			<h3 class="urgent">Action Required: SLA Deadline Approaching</h3>
+			<p>The following ticket is approaching its SLA deadline and requires immediate attention:</p>
+		</div>
+
+		<div class="ticket-info">
+			<h3>Ticket #{{ticket_number_safe}}</h3>
+			<p><strong>Subject:</strong> {{ticket_subject_safe}}</p>
+			<p><strong>Priority:</strong> {{priority_safe}}</p>
+			<p><strong>Status:</strong> {{status_safe}}</p>
+			<p><strong>Customer:</strong> {{customer_name_safe}} ({{customer_email_safe}})</p>
+			<p><strong>Created:</strong> {{created_date_safe}}</p>
+			<p><strong>Assigned to:</strong> {{agent_name_safe}}</p>
+		</div>
+
+		<div class="time-remaining">
+			Time Until SLA Breach: {{time_remaining_safe}}
+		</div>
+
+		<div style="background: #ffebee; padding: 15px; border-radius: 4px; border-left: 4px solid #d63638; margin: 20px 0;">
+			<h4>SLA Requirements:</h4>
+			<?php if ( ! empty( $template_data['response_due'] ) ): ?>
+			<p><strong>Response Due:</strong> {{response_due_safe}}</p>
+			<?php endif; ?>
+			<?php if ( ! empty( $template_data['resolution_due'] ) ): ?>
+			<p><strong>Resolution Due:</strong> {{resolution_due_safe}}</p>
+			<?php endif; ?>
+			<p><strong>SLA Type:</strong> {{sla_type_safe}}</p>
+		</div>
+
+		<p><strong>Customer Message:</strong></p>
+		<div style="background: white; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
+			{{ticket_content_html}}
+		</div>
+
+		<p style="text-align: center;">
+			<a href="{{admin_ticket_url_safe}}" class="button">Take Action Now</a>
+		</p>
+
+		<div style="background: #e8f5e8; padding: 15px; border-radius: 4px; margin: 20px 0;">
+			<h4>Recommended Actions:</h4>
+			<ul>
+				<li>Review and respond to the customer immediately</li>
+				<li>If more time is needed, communicate with the customer</li>
+				<li>Consider escalating if unable to meet the deadline</li>
+				<li>Update ticket status and priority as appropriate</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="footer">
+		<p>This is an automated SLA warning from {{entity_name_safe}} support system.</p>
+		<p>Please take immediate action to avoid SLA breach.</p>
+	</div>
+</body>
+</html>

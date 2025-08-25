@@ -1,0 +1,226 @@
+<?php
+/**
+ * Multi-Entity Ticket System Public Class
+ *
+ * @package    MultiEntityTicketSystem
+ * @subpackage MultiEntityTicketSystem/public
+ * @since      1.0.0
+ */
+
+/**
+ * The public-facing functionality of the plugin.
+ *
+ * Defines the plugin name, version, and two examples hooks for how to
+ * enqueue the public-facing stylesheet and JavaScript.
+ *
+ * @package    MultiEntityTicketSystem
+ * @subpackage MultiEntityTicketSystem/public
+ * @author     Your Name <email@example.com>
+ */
+class METS_Public {
+
+	/**
+	 * The ID of this plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      string    $plugin_name    The ID of this plugin.
+	 */
+	private $plugin_name;
+
+	/**
+	 * The version of this plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      string    $version    The current version of this plugin.
+	 */
+	private $version;
+
+	/**
+	 * Initialize the class and set its properties.
+	 *
+	 * @since    1.0.0
+	 * @param    string    $plugin_name    The name of the plugin.
+	 * @param    string    $version         The version of this plugin.
+	 */
+	public function __construct( $plugin_name, $version ) {
+		$this->plugin_name = $plugin_name;
+		$this->version = $version;
+	}
+
+	/**
+	 * Handle customer reply submissions
+	 *
+	 * @since    1.0.0
+	 */
+	public function handle_customer_reply() {
+		// Check if this is a customer reply submission
+		if ( ! isset( $_POST['action'] ) || $_POST['action'] !== 'mets_customer_add_reply' ) {
+			return;
+		}
+		
+		// Verify nonce
+		if ( ! isset( $_POST['customer_reply_nonce'] ) || ! wp_verify_nonce( $_POST['customer_reply_nonce'], 'mets_customer_reply' ) ) {
+			wp_die( __( 'Security check failed', 'multi-entity-ticket-system' ) );
+		}
+		
+		// Check if user is logged in
+		if ( ! is_user_logged_in() ) {
+			wp_die( __( 'You must be logged in to reply to tickets', 'multi-entity-ticket-system' ) );
+		}
+		
+		// Get and validate inputs
+		$ticket_id = isset( $_POST['ticket_id'] ) ? intval( $_POST['ticket_id'] ) : 0;
+		$content = isset( $_POST['reply_content'] ) ? sanitize_textarea_field( $_POST['reply_content'] ) : '';
+		
+		// Validate required fields
+		if ( empty( $ticket_id ) || empty( $content ) ) {
+			wp_die( __( 'Please fill in all required fields', 'multi-entity-ticket-system' ) );
+		}
+		
+		// Get current user
+		$current_user = wp_get_current_user();
+		
+		// Verify user has access to this ticket
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+		$ticket_model = new METS_Ticket_Model();
+		$ticket = $ticket_model->get( $ticket_id );
+		
+		if ( ! $ticket || $ticket->customer_email !== $current_user->user_email ) {
+			wp_die( __( 'Access denied', 'multi-entity-ticket-system' ) );
+		}
+		
+		// Check if ticket is closed
+		if ( $ticket->status === 'closed' ) {
+			wp_die( __( 'This ticket is closed and cannot receive replies', 'multi-entity-ticket-system' ) );
+		}
+		
+		// Create reply
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-reply-model.php';
+		$reply_model = new METS_Ticket_Reply_Model();
+		
+		$reply_data = array(
+			'ticket_id'    => $ticket_id,
+			'user_id'      => $current_user->ID,
+			'user_type'    => 'customer',
+			'content'      => $content,
+			'is_internal_note' => 0,
+		);
+		
+		$reply_id = $reply_model->create( $reply_data );
+		
+		// Check if reply creation failed
+		if ( is_wp_error( $reply_id ) ) {
+			error_log( '[METS] Failed to create reply: ' . $reply_id->get_error_message() );
+			wp_die( __( 'Failed to add reply. Please try again.', 'multi-entity-ticket-system' ) );
+		}
+		
+		if ( ! $reply_id ) {
+			error_log( '[METS] Failed to create reply: Unknown error' );
+			wp_die( __( 'Failed to add reply. Please try again.', 'multi-entity-ticket-system' ) );
+		}
+		
+		// Handle file attachments if any
+		if ( ! empty( $_FILES['reply_attachment'] ) && ! empty( $_FILES['reply_attachment']['name'][0] ) ) {
+			require_once METS_PLUGIN_PATH . 'includes/models/class-mets-attachment-model.php';
+			require_once METS_PLUGIN_PATH . 'includes/class-mets-security-manager.php';
+			
+			$attachment_model = new METS_Attachment_Model();
+			
+			// Handle multiple file uploads
+			$files = $_FILES['reply_attachment'];
+			$upload_errors = array();
+			
+			for ( $i = 0; $i < count( $files['name'] ); $i++ ) {
+				// Skip empty files
+				if ( empty( $files['name'][$i] ) ) {
+					continue;
+				}
+				
+				// Create file array for this file
+				$file = array(
+					'name'     => $files['name'][$i],
+					'type'     => $files['type'][$i],
+					'tmp_name' => $files['tmp_name'][$i],
+					'error'    => $files['error'][$i],
+					'size'     => $files['size'][$i]
+				);
+				
+				// Validate file using security manager
+				$security_manager = METS_Security_Manager::get_instance();
+				$validation_result = $security_manager->validate_file_upload( $file );
+				
+				if ( ! $validation_result['valid'] ) {
+					$upload_errors = array_merge( $upload_errors, $validation_result['errors'] );
+					continue;
+				}
+				
+				// Handle file upload using WordPress function
+				if ( ! function_exists( 'wp_handle_upload' ) ) {
+					require_once( ABSPATH . 'wp-admin/includes/file.php' );
+				}
+				
+				$upload_overrides = array(
+					'test_form' => false,
+				);
+				
+				$uploaded_file = wp_handle_upload( $file, $upload_overrides );
+				
+				if ( isset( $uploaded_file['error'] ) ) {
+					$upload_errors[] = $uploaded_file['error'];
+					continue;
+				}
+				
+				// Create attachment record
+				$attachment_data = array(
+					'ticket_id' => $ticket_id,
+					'reply_id' => $reply_id,
+					'file_name' => basename( $uploaded_file['file'] ),
+					'file_url' => $uploaded_file['url'],
+					'file_size' => filesize( $uploaded_file['file'] ),
+					'file_type' => $uploaded_file['type'],
+				);
+				
+				$attachment_result = $attachment_model->create( $attachment_data );
+				
+				if ( is_wp_error( $attachment_result ) ) {
+					// Clean up uploaded file if database insert failed
+					wp_delete_file( $uploaded_file['file'] );
+					$upload_errors[] = $attachment_result->get_error_message();
+				} elseif ( ! $attachment_result ) {
+					// Clean up uploaded file if database insert failed
+					wp_delete_file( $uploaded_file['file'] );
+					$upload_errors[] = __( 'Failed to save attachment information to database.', 'multi-entity-ticket-system' );
+				}
+			}
+			
+			// Log any upload errors
+			if ( ! empty( $upload_errors ) ) {
+				error_log( '[METS] Attachment upload errors for reply ' . $reply_id . ': ' . print_r( $upload_errors, true ) );
+			}
+		}
+		
+		// Update ticket status to "open" if it was "new"
+		if ( $ticket->status === 'new' ) {
+			$ticket_model->update( $ticket_id, array( 'status' => 'open' ) );
+		}
+		
+		// Send notification to agents
+		do_action( 'mets_ticket_replied', $ticket_id, $reply_id, 'customer' );
+		
+		// Redirect back to ticket with success message
+		$redirect_url = add_query_arg( 
+			array( 
+				'mets_view' => 'ticket', 
+				'mets_ticket' => $ticket_id,
+				'reply_added' => '1'
+			),
+			get_permalink()
+		);
+		
+		wp_redirect( $redirect_url );
+		exit;
+	}
+}
+?>

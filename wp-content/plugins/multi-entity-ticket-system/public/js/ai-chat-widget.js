@@ -1,0 +1,599 @@
+/**
+ * AI Chat Widget JavaScript
+ *
+ * @package METS
+ * @since 1.0.0
+ */
+
+(function($) {
+    'use strict';
+
+    class METSAIChatWidget {
+        constructor() {
+            this.widget = null;
+            this.chatToggle = null;
+            this.chatWindow = null;
+            this.messagesContainer = null;
+            this.messageInput = null;
+            this.sendButton = null;
+            this.sessionId = null;
+            this.userName = '';
+            this.userEmail = '';
+            this.userEntityId = '';
+            this.isOpen = false;
+            this.isMinimized = false;
+            this.messageCount = 0;
+            this.sessionTimeout = null;
+            
+            this.init();
+        }
+
+        init() {
+            console.log('METS AI Chat Widget: Initializing...', metsAiChat);
+            
+            this.widget = $('#mets-ai-chat-widget');
+            if (!this.widget.length) {
+                console.error('METS AI Chat Widget: Widget element not found');
+                return;
+            }
+
+            console.log('METS AI Chat Widget: Found widget element');
+            this.setupElements();
+            this.bindEvents();
+            this.setupAutoResize();
+            this.startSessionTimeout();
+            
+            // Show widget with animation
+            console.log('METS AI Chat Widget: Showing widget');
+            setTimeout(() => {
+                this.widget.fadeIn(300);
+                if (metsAiChat.settings.auto_open) {
+                    // Use configurable auto-open delay (default 20 seconds)
+                    const autoOpenDelay = (metsAiChat.settings.auto_open_delay || 20) * 1000;
+                    console.log('METS AI Chat Widget: Auto-open scheduled in', autoOpenDelay / 1000, 'seconds');
+                    setTimeout(() => this.openChat(), autoOpenDelay);
+                }
+            }, 1000);
+        }
+
+        setupElements() {
+            this.chatToggle = $('#mets-chat-toggle');
+            this.chatWindow = $('#mets-chat-window');
+            this.messagesContainer = $('#mets-chat-messages');
+            this.messageInput = $('#mets-message-input');
+            this.sendButton = $('#mets-send-btn');
+        }
+
+        bindEvents() {
+            // Toggle chat
+            this.chatToggle.on('click', () => this.toggleChat());
+            
+            // Window controls
+            $('#mets-chat-minimize').on('click', () => this.minimizeChat());
+            $('#mets-chat-close').on('click', () => this.closeChat());
+            
+            // Message input
+            this.messageInput.on('input', () => this.handleInputChange());
+            this.messageInput.on('keydown', (e) => this.handleKeyDown(e));
+            
+            // Send button
+            this.sendButton.on('click', () => this.sendMessage());
+            
+            // Contact form
+            $('#mets-contact-submit').on('click', () => this.submitContactInfo());
+            
+            // File upload
+            $('#mets-file-upload-btn').on('click', () => $('#mets-file-input').click());
+            $('#mets-file-input').on('change', (e) => this.handleFileUpload(e));
+            
+            // Action buttons
+            $('#mets-create-ticket-btn').on('click', () => this.showCreateTicketModal());
+            $('#mets-email-conversation-btn').on('click', () => this.emailConversation());
+            $('#mets-clear-chat-btn').on('click', () => this.clearChat());
+            
+            // Modal controls
+            $('#mets-modal-close, #mets-cancel-ticket').on('click', () => this.hideCreateTicketModal());
+            $('#mets-ticket-form').on('submit', (e) => this.submitTicketForm(e));
+            
+            // Click outside to close modal
+            $('#mets-create-ticket-modal').on('click', (e) => {
+                if (e.target.id === 'mets-create-ticket-modal') {
+                    this.hideCreateTicketModal();
+                }
+            });
+            
+            // Expand toggle button on hover
+            this.chatToggle.on('mouseenter', () => {
+                if (!this.isOpen) {
+                    this.chatToggle.addClass('expanded');
+                }
+            }).on('mouseleave', () => {
+                if (!this.isOpen) {
+                    this.chatToggle.removeClass('expanded');
+                }
+            });
+        }
+
+        setupAutoResize() {
+            this.messageInput.on('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            });
+        }
+
+        startSessionTimeout() {
+            if (metsAiChat.settings.session_timeout > 0) {
+                this.sessionTimeout = setTimeout(() => {
+                    this.showSessionExpiredMessage();
+                }, metsAiChat.settings.session_timeout * 1000);
+            }
+        }
+
+        resetSessionTimeout() {
+            if (this.sessionTimeout) {
+                clearTimeout(this.sessionTimeout);
+                this.startSessionTimeout();
+            }
+        }
+
+        toggleChat() {
+            console.log('METS AI Chat Widget: Toggle chat clicked, isOpen:', this.isOpen);
+            if (this.isOpen) {
+                this.closeChat();
+            } else {
+                this.openChat();
+            }
+        }
+
+        openChat() {
+            console.log('METS AI Chat Widget: Opening chat');
+            this.isOpen = true;
+            this.isMinimized = false;
+            this.chatToggle.addClass('open');
+            this.chatWindow.addClass('show');
+            console.log('METS AI Chat Widget: Added show class to chat window');
+            this.hideBadge();
+            
+            // Focus input if contact form is not required or already submitted
+            if (!metsAiChat.settings.require_contact_info || this.userEmail) {
+                setTimeout(() => this.messageInput.focus(), 300);
+            }
+            
+            this.scrollToBottom();
+        }
+
+        closeChat() {
+            this.isOpen = false;
+            this.isMinimized = false;
+            this.chatToggle.removeClass('open expanded');
+            this.chatWindow.removeClass('show');
+        }
+
+        minimizeChat() {
+            this.isMinimized = true;
+            this.chatToggle.removeClass('open');
+            this.chatWindow.removeClass('show');
+        }
+
+        handleInputChange() {
+            const hasText = this.messageInput.val().trim().length > 0;
+            this.sendButton.prop('disabled', !hasText);
+            
+            if (hasText) {
+                this.sendButton.addClass('active');
+            } else {
+                this.sendButton.removeClass('active');
+            }
+        }
+
+        handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!this.sendButton.prop('disabled')) {
+                    this.sendMessage();
+                }
+            }
+        }
+
+        sendMessage() {
+            const message = this.messageInput.val().trim();
+            if (!message || this.sendButton.prop('disabled')) return;
+
+            // Add user message to chat
+            this.addMessage('user', message, this.userName || 'You');
+            
+            // Clear input and disable send button
+            this.messageInput.val('').trigger('input');
+            this.sendButton.prop('disabled', true);
+            
+            // Show typing indicator
+            this.showTypingIndicator();
+            
+            // Send to server
+            this.sendToServer(message);
+            
+            // Reset session timeout
+            this.resetSessionTimeout();
+        }
+
+        sendToServer(message) {
+            const data = {
+                action: 'mets_ai_chat_message',
+                message: message,
+                session_id: this.sessionId,
+                user_name: this.userName,
+                user_email: this.userEmail,
+                user_entity_id: this.userEntityId,
+                nonce: metsAiChat.nonce
+            };
+
+            $.post(metsAiChat.ajax_url, data)
+                .done((response) => {
+                    this.hideTypingIndicator();
+                    
+                    if (response.success) {
+                        this.sessionId = response.data.session_id;
+                        this.addMessage('ai', response.data.response, 'AI Assistant');
+                        
+                        // Show create ticket prompt occasionally
+                        if (this.messageCount > 3 && Math.random() < 0.3) {
+                            setTimeout(() => this.showCreateTicketPrompt(), 2000);
+                        }
+                        
+                        // Show email conversation prompt after longer conversations
+                        if (this.messageCount > 8 && Math.random() < 0.4) {
+                            setTimeout(() => this.showEmailConversationPrompt(), 3000);
+                        }
+                    } else {
+                        this.addMessage('ai', metsAiChat.strings.error, 'AI Assistant', 'error');
+                    }
+                })
+                .fail(() => {
+                    this.hideTypingIndicator();
+                    this.addMessage('ai', metsAiChat.strings.error, 'AI Assistant', 'error');
+                });
+        }
+
+        addMessage(role, content, senderName = '', type = '') {
+            this.messageCount++;
+            
+            const timestamp = new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const avatar = role === 'ai' 
+                ? '<div class="mets-ai-indicator">AI</div>'
+                : `<div class="mets-user-avatar">${senderName.charAt(0).toUpperCase()}</div>`;
+            
+            const messageHtml = `
+                <div class="mets-chat-message mets-message-${role} ${type}">
+                    <div class="mets-message-avatar">
+                        ${avatar}
+                    </div>
+                    <div class="mets-message-content">
+                        <div class="mets-message-bubble">
+                            ${this.formatMessage(content)}
+                        </div>
+                        <div class="mets-message-time">${timestamp}</div>
+                    </div>
+                </div>
+            `;
+            
+            this.messagesContainer.append(messageHtml);
+            this.scrollToBottom();
+            
+            // Show badge if chat is closed
+            if (!this.isOpen && role === 'ai') {
+                this.showBadge();
+            }
+        }
+
+        formatMessage(content) {
+            // Basic formatting for AI responses
+            content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            content = content.replace(/\n/g, '<br>');
+            
+            // Make URLs clickable
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            content = content.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+            
+            return content;
+        }
+
+        showTypingIndicator() {
+            $('#mets-typing-indicator').fadeIn(200);
+            this.scrollToBottom();
+        }
+
+        hideTypingIndicator() {
+            $('#mets-typing-indicator').fadeOut(200);
+        }
+
+        showBadge() {
+            const badge = $('#mets-chat-badge');
+            const currentCount = parseInt(badge.text()) || 0;
+            badge.text(currentCount + 1).fadeIn(200);
+        }
+
+        hideBadge() {
+            $('#mets-chat-badge').fadeOut(200);
+        }
+
+        submitContactInfo() {
+            const name = $('#mets-user-name').val().trim();
+            const email = $('#mets-user-email').val().trim();
+            const entityId = $('#mets-user-entity').val();
+            
+            if (!name) {
+                alert(metsAiChat.strings.name_required);
+                return;
+            }
+            
+            if (!email || !this.isValidEmail(email)) {
+                alert(metsAiChat.strings.email_required);
+                return;
+            }
+            
+            if (!entityId) {
+                alert(metsAiChat.strings.entity_required || 'Please select a department');
+                return;
+            }
+            
+            this.userName = name;
+            this.userEmail = email;
+            this.userEntityId = entityId;
+            
+            console.log('METS AI Chat: Contact info submitted - Entity ID:', entityId);
+            
+            // Hide contact form and show chat input
+            $('#mets-contact-form').slideUp(300);
+            $('#mets-chat-input').slideDown(300, () => {
+                this.messageInput.focus();
+            });
+            
+            // Update ticket form with user info
+            $('#mets-ticket-name').val(name);
+            $('#mets-ticket-email').val(email);
+        }
+
+        isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Check file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+            
+            // Show file in chat
+            this.addMessage('user', `📎 ${file.name} (${this.formatFileSize(file.size)})`, this.userName || 'You');
+            
+            // TODO: Implement file upload to server
+            console.log('File upload:', file);
+        }
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        clearChat() {
+            if (confirm('Are you sure you want to clear the chat history?')) {
+                this.messagesContainer.empty();
+                this.messageCount = 0;
+                this.sessionId = null;
+                
+                // Add welcome message back
+                this.addMessage('ai', metsAiChat.settings.welcome_message, 'AI Assistant');
+            }
+        }
+
+        emailConversation() {
+            if (!this.userEmail) {
+                alert('Email address not available. Please start a new conversation.');
+                return;
+            }
+
+            if (this.messageCount < 2) {
+                alert('No conversation to email. Please have a conversation first.');
+                return;
+            }
+
+            if (confirm(`Send this conversation to ${this.userEmail}?`)) {
+                const chatHistory = this.getChatHistoryForEmail();
+                
+                const data = {
+                    action: 'mets_ai_chat_email_conversation',
+                    session_id: this.sessionId,
+                    user_name: this.userName,
+                    user_email: this.userEmail,
+                    chat_history: chatHistory,
+                    nonce: metsAiChat.nonce
+                };
+
+                // Show sending status
+                this.addMessage('ai', 'Sending conversation to your email...', 'AI Assistant');
+
+                $.post(metsAiChat.ajax_url, data)
+                    .done((response) => {
+                        if (response.success) {
+                            this.addMessage('ai', response.data.message, 'AI Assistant', 'success');
+                        } else {
+                            this.addMessage('ai', 'Failed to send email: ' + response.data, 'AI Assistant', 'error');
+                        }
+                    })
+                    .fail(() => {
+                        this.addMessage('ai', 'Failed to send email. Please try again.', 'AI Assistant', 'error');
+                    });
+            }
+        }
+
+        getChatHistoryForEmail() {
+            const messages = [];
+            this.messagesContainer.find('.mets-chat-message').each(function() {
+                const role = $(this).hasClass('mets-message-user') ? 'You' : 'AI Assistant';
+                const content = $(this).find('.mets-message-bubble').text();
+                const time = $(this).find('.mets-message-time').text();
+                
+                messages.push({
+                    role: role,
+                    content: content,
+                    time: time
+                });
+            });
+            
+            return messages;
+        }
+
+        showCreateTicketPrompt() {
+            const promptMessage = 'Would you like me to create a support ticket for you? This will help ensure your issue gets proper attention from our support team.';
+            this.addMessage('ai', promptMessage, 'AI Assistant');
+        }
+
+        showEmailConversationPrompt() {
+            const promptMessage = 'Would you like me to email this conversation to you for your records? You can use the "Email Conversation" button below.';
+            this.addMessage('ai', promptMessage, 'AI Assistant');
+        }
+
+        showCreateTicketModal() {
+            const modal = $('#mets-create-ticket-modal');
+            
+            // Pre-populate form with chat history
+            const chatHistory = this.getChatHistory();
+            if (chatHistory) {
+                $('#mets-ticket-description').val(chatHistory);
+            }
+            
+            modal.addClass('show').fadeIn(300);
+            $('#mets-ticket-subject').focus();
+        }
+
+        hideCreateTicketModal() {
+            $('#mets-create-ticket-modal').removeClass('show').fadeOut(300);
+        }
+
+        getChatHistory() {
+            const messages = [];
+            this.messagesContainer.find('.mets-chat-message').each(function() {
+                const role = $(this).hasClass('mets-message-user') ? 'You' : 'AI Assistant';
+                const content = $(this).find('.mets-message-bubble').text();
+                const time = $(this).find('.mets-message-time').text();
+                
+                messages.push(`[${time}] ${role}: ${content}`);
+            });
+            
+            return messages.length > 1 ? 'Chat History:\n' + messages.join('\n') + '\n\nAdditional Details:\n' : '';
+        }
+
+        submitTicketForm(e) {
+            e.preventDefault();
+            
+            const formData = {
+                action: 'mets_ai_chat_create_ticket',
+                customer_name: $('#mets-ticket-name').val().trim(),
+                customer_email: $('#mets-ticket-email').val().trim(),
+                subject: $('#mets-ticket-subject').val().trim(),
+                description: $('#mets-ticket-description').val().trim(),
+                priority: $('#mets-ticket-priority').val(),
+                entity_id: this.userEntityId,
+                session_id: this.sessionId,
+                nonce: metsAiChat.nonce
+            };
+            
+            // Debug logging
+            console.log('METS AI Chat: Creating ticket with entity_id:', this.userEntityId);
+            console.log('METS AI Chat: Form data:', formData);
+            
+            // Validate form
+            if (!formData.customer_name || !formData.customer_email || !formData.subject || !formData.description) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            if (!this.isValidEmail(formData.customer_email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            // Disable submit button
+            const submitBtn = $('#mets-ticket-form button[type="submit"]');
+            const originalText = submitBtn.text();
+            submitBtn.prop('disabled', true).text('Creating...');
+            
+            $.post(metsAiChat.ajax_url, formData)
+                .done((response) => {
+                    if (response.success) {
+                        this.hideCreateTicketModal();
+                        this.addMessage('ai', response.data.message, 'AI Assistant', 'success');
+                        
+                        // Clear chat session
+                        this.sessionId = null;
+                        
+                        // Show success animation
+                        this.showSuccessAnimation();
+                    } else {
+                        alert('Error creating ticket: ' + response.data);
+                    }
+                })
+                .fail(() => {
+                    alert('Failed to create ticket. Please try again.');
+                })
+                .always(() => {
+                    submitBtn.prop('disabled', false).text(originalText);
+                });
+        }
+
+        showSuccessAnimation() {
+            const successIcon = $('<div class="mets-success-icon">✓</div>');
+            successIcon.css({
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: '48px',
+                color: '#10b981',
+                zIndex: 1000,
+                opacity: 0
+            });
+            
+            this.chatWindow.append(successIcon);
+            
+            successIcon.animate({ opacity: 1, fontSize: '64px' }, 300)
+                      .delay(2000)
+                      .animate({ opacity: 0 }, 300, function() {
+                          $(this).remove();
+                      });
+        }
+
+        showSessionExpiredMessage() {
+            this.addMessage('ai', 'Your session has expired due to inactivity. Please start a new conversation.', 'System', 'warning');
+            this.sessionId = null;
+        }
+
+        scrollToBottom() {
+            setTimeout(() => {
+                this.messagesContainer.scrollTop(this.messagesContainer[0].scrollHeight);
+            }, 100);
+        }
+    }
+
+    // Initialize widget when DOM is ready
+    $(document).ready(function() {
+        new METSAIChatWidget();
+    });
+
+    // Expose widget for external access
+    window.METSAIChatWidget = METSAIChatWidget;
+
+})(jQuery);

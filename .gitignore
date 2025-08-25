@@ -1,0 +1,26 @@
+# Template .gitignore file from MAMP PRO for WordPress projects
+
+# On macOS you should ignore .DS_Store files.
+.DS_Store
+
+# Ignore everything in the WP root except the "wp-content" directory.
+/*
+!.gitignore
+!wp-content/
+ 
+# Ignore everything in the "wp-content" directory, except the "plugins" and "themes" directories.
+wp-content/*
+!wp-content/plugins/
+!wp-content/themes/
+ 
+# Ignore everything in the "plugins" directory.
+# wp-content/plugins/*
+
+# Exempt my-example-plugin from this general ignore rule.
+# !wp-content/plugins/my-example-plugin/
+ 
+# Ignore everything in the "themes" directory.
+# wp-content/themes/*
+
+# Exempt my-theme from this general ignore rule.
+# !wp-content/themes/my-theme/

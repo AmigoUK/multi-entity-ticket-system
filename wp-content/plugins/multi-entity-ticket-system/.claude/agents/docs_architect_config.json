@@ -1,0 +1,25 @@
+{
+    "name": "docs-architect",
+    "description": "Documentation architect for creating comprehensive, user-focused documentation",
+    "version": "1.0.0",
+    "author": "Qwen Code Team",
+    "capabilities": [
+        "code_analysis",
+        "documentation_generation",
+        "api_documentation",
+        "user_guides",
+        "configuration_guides"
+    ],
+    "supported_formats": [
+        "markdown",
+        "html",
+        "pdf"
+    ],
+    "configuration": {
+        "analyze_dependencies": true,
+        "generate_examples": true,
+        "include_troubleshooting": true,
+        "output_format": "markdown",
+        "max_sections": 20
+    }
+}
