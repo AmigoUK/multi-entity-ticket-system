@@ -1,0 +1,701 @@
+/**
+ * Multi-Entity Ticket System Admin Styles
+ *
+ * @package MultiEntityTicketSystem
+ * @since   1.0.0
+ */
+
+/* Entity Status Indicators */
+.status-active {
+	color: #00a32a;
+	font-weight: 600;
+}
+
+.status-inactive {
+	color: #d63638;
+	font-weight: 600;
+}
+
+/* Entity Management Table */
+.wp-list-table .column-name {
+	width: 25%;
+}
+
+.wp-list-table .column-slug {
+	width: 20%;
+}
+
+.wp-list-table .column-parent {
+	width: 15%;
+}
+
+.wp-list-table .column-status {
+	width: 10%;
+}
+
+.wp-list-table .column-tickets {
+	width: 10%;
+}
+
+.wp-list-table .column-date {
+	width: 15%;
+}
+
+/* Tickets List Table */
+.wp-list-table .column-ticket_number {
+	width: 12%;
+}
+
+.wp-list-table .column-subject {
+	width: 20%;
+}
+
+.wp-list-table .column-customer {
+	width: 15%;
+}
+
+.wp-list-table .column-entity {
+	width: 12%;
+}
+
+.wp-list-table .column-priority {
+	width: 8%;
+}
+
+.wp-list-table .column-assigned_to {
+	width: 10%;
+}
+
+.wp-list-table .column-created_at {
+	width: 11%;
+}
+
+.wp-list-table .column-updated_at {
+	width: 12%;
+}
+
+/* Form Styling */
+.mets-form-section {
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	padding: 20px;
+	margin-bottom: 20px;
+}
+
+.mets-form-section h3 {
+	margin-top: 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #ddd;
+}
+
+/* Color Picker Styling */
+input[type="color"] {
+	width: 50px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid #ccd0d4;
+	border-radius: 3px;
+}
+
+/* Admin Dashboard - Ticket Reply Styling */
+#ticket-replies .ticket-reply {
+	margin-bottom: 20px !important;
+	padding: 15px !important;
+	border-radius: 8px !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+	transition: all 0.2s ease;
+	border: 1px solid #ddd !important;
+}
+
+#ticket-replies .ticket-reply:hover {
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Admin Dashboard - Customer replies only (blue) */
+#ticket-replies .ticket-reply[data-user-type="customer"] {
+	background: linear-gradient(135deg, #E3F2FD 0%, #F0F8FF 100%) !important;
+	border-left: 4px solid #2196F3 !important;
+	border: 1px solid #BBDEFB !important;
+}
+
+/* Admin Dashboard - Agent replies (neutral) */
+#ticket-replies .ticket-reply[data-user-type="agent"] {
+	background: #f8f9fa !important;
+	border-left: 4px solid #6c757d !important;
+	border: 1px solid #dee2e6 !important;
+}
+
+/* Admin Dashboard - Internal notes (yellow) */
+#ticket-replies .ticket-reply[data-internal="true"] {
+	background: linear-gradient(135deg, #FFF8E1 0%, #FFFDE7 100%) !important;
+	border-left: 4px solid #FF9800 !important;
+	border: 1px solid #FFE082 !important;
+}
+
+/* Admin Dashboard - System messages (gray) */
+#ticket-replies .ticket-reply[data-user-type="system"] {
+	background: #f5f5f5 !important;
+	border-left: 4px solid #9e9e9e !important;
+	border: 1px solid #e0e0e0 !important;
+}
+
+/* Reply author styling */
+#ticket-replies .ticket-reply .reply-author {
+	font-weight: 600 !important;
+	margin-bottom: 5px !important;
+}
+
+#ticket-replies .ticket-reply[data-user-type="customer"] .reply-author {
+	color: #1976D2 !important;
+}
+
+#ticket-replies .ticket-reply[data-user-type="agent"] .reply-author {
+	color: #495057 !important;
+}
+
+#ticket-replies .ticket-reply[data-internal="true"] .reply-author {
+	color: #F57C00 !important;
+}
+
+#ticket-replies .ticket-reply[data-user-type="system"] .reply-author {
+	color: #757575 !important;
+}
+
+/* Internal note badge */
+#ticket-replies .internal-note-badge {
+	background: #FF9800 !important;
+	color: white !important;
+	padding: 2px 8px !important;
+	border-radius: 12px !important;
+	font-size: 11px !important;
+	font-weight: bold !important;
+	text-transform: uppercase !important;
+	margin-left: 10px !important;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Customer badge in admin */
+#ticket-replies .customer-badge {
+	background: #2196F3 !important;
+	color: white !important;
+	padding: 2px 8px !important;
+	border-radius: 12px !important;
+	font-size: 11px !important;
+	font-weight: bold !important;
+	text-transform: uppercase !important;
+	margin-left: 10px !important;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Reply timestamp */
+#ticket-replies .ticket-reply .reply-date {
+	color: #666 !important;
+	font-size: 13px !important;
+	font-style: italic !important;
+	float: right !important;
+}
+
+/* Reply header clearfix */
+#ticket-replies .ticket-reply .reply-header {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: flex-start !important;
+	margin-bottom: 10px !important;
+	padding-bottom: 8px !important;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+#ticket-replies .ticket-reply .reply-header::after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
+/* Reply content */
+#ticket-replies .ticket-reply .reply-content {
+	margin-top: 10px !important;
+	line-height: 1.6 !important;
+	color: #333 !important;
+	clear: both !important;
+}
+
+/* Ticket History Colors */
+.ticket-history-item {
+	padding: 10px 15px;
+	margin-bottom: 10px;
+	border-radius: 6px;
+	border-left: 4px solid #ccc;
+}
+
+.ticket-history-item.status-change {
+	background: #E8F5E8;
+	border-left-color: #4CAF50;
+}
+
+.ticket-history-item.assignment-change {
+	background: #FFF3E0;
+	border-left-color: #FF9800;
+}
+
+.ticket-history-item.reply-added {
+	background: #E3F2FD;
+	border-left-color: #2196F3;
+}
+
+.ticket-history-item.ticket-created {
+	background: #F3E5F5;
+	border-left-color: #9C27B0;
+}
+
+.ticket-history-item .history-timestamp {
+	color: #666;
+	font-size: 12px;
+	float: right;
+}
+
+.ticket-history-item .history-description {
+	font-weight: 500;
+	color: #333;
+}
+
+/* File Upload Styling */
+.file-upload-section {
+	margin-top: 15px !important;
+	padding: 15px !important;
+	background: #f9f9f9 !important;
+	border: 1px solid #ddd !important;
+	border-radius: 6px !important;
+}
+
+.file-upload-section label {
+	font-weight: 600 !important;
+	margin-bottom: 8px !important;
+	display: block !important;
+}
+
+.file-upload-input {
+	width: 100% !important;
+	padding: 8px !important;
+	border: 2px dashed #ccc !important;
+	border-radius: 4px !important;
+	background: white !important;
+	cursor: pointer !important;
+	transition: all 0.3s ease !important;
+}
+
+.file-upload-input:hover {
+	border-color: #0073aa !important;
+	background: #f0f8ff !important;
+}
+
+.file-upload-input:focus {
+	outline: none !important;
+	border-color: #0073aa !important;
+	box-shadow: 0 0 5px rgba(0, 115, 170, 0.3) !important;
+}
+
+#file-preview, #reply-file-preview {
+	margin-top: 15px !important;
+}
+
+.file-preview-item {
+	display: flex !important;
+	align-items: center !important;
+	padding: 10px !important;
+	background: white !important;
+	border: 1px solid #ddd !important;
+	border-radius: 4px !important;
+	margin-bottom: 10px !important;
+	transition: all 0.2s ease !important;
+}
+
+.file-preview-item:hover {
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.file-preview-item .file-icon {
+	width: 40px !important;
+	height: 40px !important;
+	margin-right: 12px !important;
+	background: #f5f5f5 !important;
+	border: 1px solid #ddd !important;
+	border-radius: 4px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	font-size: 18px !important;
+	color: #666 !important;
+}
+
+.file-preview-item .file-info {
+	flex: 1 !important;
+	min-width: 0 !important;
+}
+
+.file-preview-item .file-name {
+	font-weight: 600 !important;
+	color: #333 !important;
+	margin-bottom: 2px !important;
+	word-break: break-all !important;
+}
+
+.file-preview-item .file-size {
+	font-size: 12px !important;
+	color: #666 !important;
+	margin-bottom: 2px !important;
+}
+
+.file-preview-item .file-error {
+	font-size: 12px !important;
+	color: #d63638 !important;
+	font-weight: 500 !important;
+}
+
+.file-preview-item .file-remove {
+	background: #d63638 !important;
+	color: white !important;
+	border: none !important;
+	border-radius: 50% !important;
+	width: 24px !important;
+	height: 24px !important;
+	cursor: pointer !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	font-size: 14px !important;
+	transition: background 0.2s ease !important;
+}
+
+.file-preview-item .file-remove:hover {
+	background: #b32d2e !important;
+}
+
+/* WP Editor Text Visibility Fix */
+.wp-editor-area {
+	background-color: #ffffff !important;
+	color: #333333 !important;
+}
+
+#ticket_description_ifr, #reply_content_ifr {
+	background: #ffffff !important;
+}
+
+.mce-tinymce {
+	background: #ffffff !important;
+}
+
+.mce-edit-area {
+	background: #ffffff !important;
+}
+
+/* Admin Attachment Display */
+.admin-attachments-section {
+	margin-top: 15px !important;
+	padding: 12px !important;
+	background: #f9f9f9 !important;
+	border: 1px solid #ddd !important;
+	border-radius: 6px !important;
+}
+
+.admin-attachments-section h4 {
+	margin: 0 0 10px 0 !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	color: #555 !important;
+}
+
+.admin-attachment-item {
+	display: flex !important;
+	align-items: center !important;
+	padding: 8px !important;
+	background: white !important;
+	border: 1px solid #ddd !important;
+	border-radius: 4px !important;
+	margin-bottom: 8px !important;
+	transition: all 0.2s ease !important;
+}
+
+.admin-attachment-item:hover {
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+	border-color: #0073aa !important;
+}
+
+.admin-attachment-item .attachment-preview,
+.admin-attachment-item .attachment-icon {
+	width: 50px !important;
+	height: 50px !important;
+	margin-right: 12px !important;
+	border: 1px solid #ddd !important;
+	border-radius: 4px !important;
+	overflow: hidden !important;
+	background: #f5f5f5 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+
+.admin-attachment-item .attachment-preview img {
+	max-width: 100% !important;
+	max-height: 100% !important;
+	object-fit: cover !important;
+	cursor: pointer !important;
+}
+
+.admin-attachment-item .attachment-info {
+	flex: 1 !important;
+	min-width: 0 !important;
+}
+
+.admin-attachment-item .attachment-name {
+	font-weight: 600 !important;
+	color: #0073aa !important;
+	margin-bottom: 2px !important;
+	word-break: break-all !important;
+}
+
+.admin-attachment-item .attachment-name a {
+	text-decoration: none !important;
+	color: inherit !important;
+}
+
+.admin-attachment-item .attachment-name a:hover {
+	text-decoration: underline !important;
+}
+
+.admin-attachment-item .attachment-meta {
+	font-size: 12px !important;
+	color: #666 !important;
+}
+
+.admin-attachment-item .attachment-actions {
+	margin-left: 12px !important;
+}
+
+/* Responsive Table */
+@media screen and (max-width: 782px) {
+	.wp-list-table .column-slug,
+	.wp-list-table .column-parent,
+	.wp-list-table .column-tickets,
+	.wp-list-table .column-date {
+		display: none;
+	}
+	
+	.wp-list-table .column-name {
+		width: 70%;
+	}
+	
+	.wp-list-table .column-status {
+		width: 30%;
+	}
+	
+	/* Mobile reply styling */
+	.ticket-reply {
+		padding: 12px;
+	}
+	
+	.ticket-reply .reply-date {
+		float: none;
+		display: block;
+		margin-top: 5px;
+	}
+}
+
+/* Dashboard Progress Bars */
+.mets-status-chart,
+.mets-priority-chart {
+	margin: 15px 0;
+}
+
+.mets-status-item,
+.mets-priority-item {
+	margin-bottom: 15px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.mets-status-bar,
+.mets-priority-bar {
+	flex: 1;
+	height: 24px;
+	background-color: #f1f1f1;
+	border-radius: 12px;
+	overflow: hidden;
+	position: relative;
+	min-width: 100px;
+}
+
+.mets-status-fill,
+.mets-priority-fill {
+	height: 100%;
+	border-radius: 12px;
+	transition: width 0.3s ease;
+	position: relative;
+}
+
+/* Status Colors */
+.mets-status-new { background-color: #3498db; }
+.mets-status-open { background-color: #e74c3c; }
+.mets-status-in_progress { background-color: #f39c12; }
+.mets-status-pending { background-color: #9b59b6; }
+.mets-status-resolved { background-color: #27ae60; }
+.mets-status-closed { background-color: #95a5a6; }
+
+/* Priority Colors */
+.mets-priority-critical { background-color: #e74c3c; }
+.mets-priority-high { background-color: #f39c12; }
+.mets-priority-medium { background-color: #3498db; }
+.mets-priority-normal { background-color: #3498db; }
+.mets-priority-low { background-color: #95a5a6; }
+
+.mets-status-details,
+.mets-priority-details {
+	min-width: 120px;
+	text-align: right;
+}
+
+.mets-status-name,
+.mets-priority-name {
+	display: block;
+	font-weight: 600;
+	color: #333;
+	margin-bottom: 2px;
+}
+
+.mets-status-count,
+.mets-priority-count {
+	display: block;
+	font-size: 13px;
+	color: #666;
+}
+
+/* Dashboard Grid Layout */
+.mets-dashboard-grid {
+	display: grid;
+	gap: 20px;
+	margin-top: 20px;
+}
+
+.mets-dashboard-section {
+	background: #fff;
+	padding: 20px;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+}
+
+.mets-dashboard-section h2 {
+	margin-top: 0;
+	margin-bottom: 15px;
+	font-size: 18px;
+	color: #1d2327;
+}
+
+.mets-dashboard-columns {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+}
+
+@media screen and (max-width: 782px) {
+	.mets-dashboard-columns {
+		grid-template-columns: 1fr;
+	}
+	
+	.mets-status-item,
+	.mets-priority-item {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 8px;
+	}
+	
+	.mets-status-details,
+	.mets-priority-details {
+		text-align: left;
+		min-width: auto;
+	}
+}
+
+/* SLA Compliance Styles */
+.mets-sla-chart {
+	margin: 15px 0;
+}
+
+.mets-sla-item {
+	margin-bottom: 12px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px;
+	border-radius: 6px;
+	background: #f9f9f9;
+}
+
+.mets-sla-indicator {
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.mets-sla-met { background-color: #27ae60; }
+.mets-sla-warning { background-color: #f39c12; }
+.mets-sla-breached { background-color: #e74c3c; }
+
+.mets-sla-details {
+	flex: 1;
+}
+
+.mets-sla-status {
+	display: block;
+	font-weight: 600;
+	color: #333;
+	margin-bottom: 2px;
+	text-transform: capitalize;
+}
+
+.mets-sla-count {
+	display: block;
+	font-size: 13px;
+	color: #666;
+}
+
+/* KPI Cards */
+.mets-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 15px;
+	margin: 20px 0;
+}
+
+.mets-kpi-card {
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 20px;
+	text-align: center;
+	transition: box-shadow 0.2s ease;
+}
+
+.mets-kpi-card:hover {
+	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mets-kpi-icon {
+	font-size: 32px;
+	margin-bottom: 10px;
+}
+
+.mets-kpi-value {
+	font-size: 28px;
+	font-weight: bold;
+	color: #1d2327;
+	margin-bottom: 5px;
+}
+
+.mets-kpi-label {
+	font-size: 14px;
+	color: #666;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}

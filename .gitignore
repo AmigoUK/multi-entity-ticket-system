@@ -36,6 +36,7 @@ wp-content/plugins/*
 !mets-*.php
 !mets-*.html
 !mets-*.sh
+!multi-entity-ticket-system/
 
 # Security - exclude sensitive files
 wp-config.php
