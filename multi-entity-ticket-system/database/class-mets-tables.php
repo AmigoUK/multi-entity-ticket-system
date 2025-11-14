@@ -37,6 +37,8 @@ class METS_Tables {
 		$this->create_automation_rules_table();
 		$this->create_response_metrics_table();
 		$this->create_workflow_rules_table();
+		$this->create_satisfaction_surveys_table();
+		$this->create_ticket_relationships_table();
 	}
 
 	/**
@@ -433,6 +435,8 @@ class METS_Tables {
 			$wpdb->prefix . 'mets_automation_rules',
 			$wpdb->prefix . 'mets_response_metrics',
 			$wpdb->prefix . 'mets_workflow_rules',
+			$wpdb->prefix . 'mets_satisfaction_surveys',
+			$wpdb->prefix . 'mets_ticket_relationships',
 		);
 
 		foreach ( $tables as $table ) {
@@ -476,6 +480,85 @@ class METS_Tables {
 	}
 
 	/**
+	 * Create satisfaction surveys table
+	 *
+	 * @since    1.0.1
+	 */
+	private function create_satisfaction_surveys_table() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'mets_satisfaction_surveys';
+		$tickets_table = $wpdb->prefix . 'mets_tickets';
+		$entities_table = $wpdb->prefix . 'mets_entities';
+
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			ticket_id bigint(20) unsigned NOT NULL,
+			customer_email varchar(100) NOT NULL,
+			rating tinyint(1) NOT NULL,
+			feedback_text text,
+			survey_sent_at datetime,
+			survey_completed_at datetime,
+			survey_token varchar(64) NOT NULL,
+			agent_id bigint(20) unsigned,
+			entity_id bigint(20) unsigned NOT NULL,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY survey_token (survey_token),
+			KEY ticket_id (ticket_id),
+			KEY customer_email (customer_email),
+			KEY rating (rating),
+			KEY entity_id (entity_id),
+			KEY agent_id (agent_id),
+			KEY survey_completed_at (survey_completed_at),
+			KEY survey_sent_at (survey_sent_at),
+			FOREIGN KEY (ticket_id) REFERENCES $tickets_table(id) ON DELETE CASCADE,
+			FOREIGN KEY (entity_id) REFERENCES $entities_table(id) ON DELETE CASCADE,
+			FOREIGN KEY (agent_id) REFERENCES {$wpdb->users}(ID) ON DELETE SET NULL
+		) $charset_collate;";
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create ticket relationships table
+	 *
+	 * @since    1.0.1
+	 */
+	private function create_ticket_relationships_table() {
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'mets_ticket_relationships';
+		$tickets_table = $wpdb->prefix . 'mets_tickets';
+
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$sql = "CREATE TABLE $table_name (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			parent_ticket_id bigint(20) unsigned NOT NULL,
+			child_ticket_id bigint(20) unsigned NOT NULL,
+			relationship_type enum('merged','split','related','duplicate') NOT NULL,
+			created_by bigint(20) unsigned,
+			notes text,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY parent_ticket_id (parent_ticket_id),
+			KEY child_ticket_id (child_ticket_id),
+			KEY relationship_type (relationship_type),
+			UNIQUE KEY unique_relationship (parent_ticket_id, child_ticket_id, relationship_type),
+			FOREIGN KEY (parent_ticket_id) REFERENCES $tickets_table(id) ON DELETE CASCADE,
+			FOREIGN KEY (child_ticket_id) REFERENCES $tickets_table(id) ON DELETE CASCADE,
+			FOREIGN KEY (created_by) REFERENCES {$wpdb->users}(ID) ON DELETE SET NULL
+		) $charset_collate;";
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		dbDelta( $sql );
+	}
+
+	/**
 	 * Drop all tables (used in uninstall)
 	 *
 	 * @since    1.0.0
@@ -485,6 +568,8 @@ class METS_Tables {
 
 		// Drop in reverse order due to foreign key constraints
 		$tables = array(
+			$wpdb->prefix . 'mets_satisfaction_surveys',
+			$wpdb->prefix . 'mets_ticket_relationships',
 			$wpdb->prefix . 'mets_response_metrics',
 			$wpdb->prefix . 'mets_email_queue',
 			$wpdb->prefix . 'mets_automation_rules',
