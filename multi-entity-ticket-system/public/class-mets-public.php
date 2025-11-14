@@ -554,7 +554,7 @@ class METS_Public {
 		<div class="mets-portal-header">
 			<h3><?php _e( 'My Support Tickets', METS_TEXT_DOMAIN ); ?></h3>
 			<?php if ( $atts['allow_new_ticket'] === 'yes' ) : ?>
-				<p><?php echo esc_html( $portal_header_text ); ?> 
+				<p><?php echo esc_html( $portal_header_text ); ?>
 				<?php if ( ! empty( $new_ticket_link_url ) && $new_ticket_link_url !== '#' ) : ?>
 					<a href="<?php echo esc_url( $new_ticket_link_url ); ?>" class="mets-new-ticket-link"><?php echo esc_html( $new_ticket_link_text ); ?></a></p>
 				<?php else : ?>
@@ -562,6 +562,9 @@ class METS_Public {
 				<?php endif; ?>
 			<?php endif; ?>
 		</div>
+
+		<!-- Dashboard Summary Widget -->
+		<?php echo $this->display_dashboard_summary( $current_user, $ticket_model ); ?>
 
 		<?php if ( empty( $tickets ) ) : ?>
 			<div class="mets-no-tickets">
@@ -713,6 +716,128 @@ class METS_Public {
 			});
 		});
 		</script>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Display dashboard summary widget
+	 *
+	 * Shows customer quick stats: total tickets, open, resolved, avg response time
+	 *
+	 * @since    1.0.1
+	 * @param    WP_User              $current_user  Current user object
+	 * @param    METS_Ticket_Model    $ticket_model  Ticket model instance
+	 * @return   string                             HTML output
+	 */
+	private function display_dashboard_summary( $current_user, $ticket_model ) {
+		global $wpdb;
+
+		// Get customer statistics
+		$customer_email = $current_user->user_email;
+
+		// Total tickets
+		$total_tickets = $ticket_model->get_count( array(
+			'customer_email' => $customer_email,
+		) );
+
+		// Open tickets (new + in_progress + on_hold)
+		$open_tickets = $ticket_model->get_count( array(
+			'customer_email' => $customer_email,
+			'statuses' => array( 'new', 'open', 'in_progress', 'on_hold' ),
+		) );
+
+		// Resolved tickets
+		$resolved_tickets = $ticket_model->get_count( array(
+			'customer_email' => $customer_email,
+			'statuses' => array( 'resolved', 'closed' ),
+		) );
+
+		// Average response time (in hours)
+		$avg_response = $wpdb->get_var( $wpdb->prepare(
+			"SELECT AVG(TIMESTAMPDIFF(HOUR, created_at, first_response_at)) as avg_hours
+			FROM {$wpdb->prefix}mets_tickets
+			WHERE customer_email = %s
+			AND first_response_at IS NOT NULL",
+			$customer_email
+		) );
+
+		$avg_response_hours = $avg_response ? round( floatval( $avg_response ), 1 ) : null;
+
+		// Recent activity - last ticket created
+		$last_ticket = $wpdb->get_row( $wpdb->prepare(
+			"SELECT created_at FROM {$wpdb->prefix}mets_tickets
+			WHERE customer_email = %s
+			ORDER BY created_at DESC
+			LIMIT 1",
+			$customer_email
+		) );
+
+		ob_start();
+		?>
+		<div class="mets-dashboard-summary">
+			<div class="mets-dashboard-cards">
+				<div class="mets-dashboard-card mets-card-total">
+					<div class="mets-card-icon">📊</div>
+					<div class="mets-card-content">
+						<div class="mets-card-value"><?php echo esc_html( $total_tickets ); ?></div>
+						<div class="mets-card-label"><?php _e( 'Total Tickets', METS_TEXT_DOMAIN ); ?></div>
+					</div>
+				</div>
+
+				<div class="mets-dashboard-card mets-card-open">
+					<div class="mets-card-icon">🔓</div>
+					<div class="mets-card-content">
+						<div class="mets-card-value"><?php echo esc_html( $open_tickets ); ?></div>
+						<div class="mets-card-label"><?php _e( 'Open Tickets', METS_TEXT_DOMAIN ); ?></div>
+					</div>
+				</div>
+
+				<div class="mets-dashboard-card mets-card-resolved">
+					<div class="mets-card-icon">✅</div>
+					<div class="mets-card-content">
+						<div class="mets-card-value"><?php echo esc_html( $resolved_tickets ); ?></div>
+						<div class="mets-card-label"><?php _e( 'Resolved', METS_TEXT_DOMAIN ); ?></div>
+					</div>
+				</div>
+
+				<div class="mets-dashboard-card mets-card-response">
+					<div class="mets-card-icon">⏱️</div>
+					<div class="mets-card-content">
+						<div class="mets-card-value">
+							<?php
+							if ( $avg_response_hours !== null ) {
+								if ( $avg_response_hours < 1 ) {
+									echo '&lt; 1h';
+								} else if ( $avg_response_hours >= 24 ) {
+									printf( _n( '%d day', '%d days', round( $avg_response_hours / 24 ), METS_TEXT_DOMAIN ), round( $avg_response_hours / 24 ) );
+								} else {
+									printf( _n( '%d hour', '%d hours', round( $avg_response_hours ), METS_TEXT_DOMAIN ), round( $avg_response_hours ) );
+								}
+							} else {
+								echo '-';
+							}
+							?>
+						</div>
+						<div class="mets-card-label"><?php _e( 'Avg Response Time', METS_TEXT_DOMAIN ); ?></div>
+					</div>
+				</div>
+			</div>
+
+			<?php if ( $last_ticket ) : ?>
+				<div class="mets-dashboard-activity">
+					<p class="mets-last-activity">
+						<span class="mets-activity-icon">🕐</span>
+						<?php
+						printf(
+							__( 'Last ticket: %s', METS_TEXT_DOMAIN ),
+							'<strong>' . human_time_diff( strtotime( $last_ticket->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', METS_TEXT_DOMAIN ) . '</strong>'
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+		</div>
 		<?php
 		return ob_get_clean();
 	}
