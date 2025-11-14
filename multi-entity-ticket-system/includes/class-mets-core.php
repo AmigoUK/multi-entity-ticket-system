@@ -293,6 +293,9 @@ class METS_Core {
 		// Customer profile and preferences AJAX hooks
 		$this->loader->add_action( 'wp_ajax_mets_update_customer_profile', $plugin_public, 'ajax_update_customer_profile' );
 		$this->loader->add_action( 'wp_ajax_mets_update_notification_preferences', $plugin_public, 'ajax_update_notification_preferences' );
+
+		// Reopen ticket AJAX hook
+		$this->loader->add_action( 'wp_ajax_mets_reopen_ticket', $plugin_public, 'ajax_reopen_ticket' );
 	}
 
 	/**

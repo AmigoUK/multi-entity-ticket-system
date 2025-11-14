@@ -529,10 +529,10 @@ class METS_Public {
 		$per_page = intval( $atts['per_page'] );
 		$page = isset( $_GET['mets_page'] ) ? max( 1, intval( $_GET['mets_page'] ) ) : 1;
 		$offset = ( $page - 1 ) * $per_page;
-		
+
 		// Check if user wants to show closed tickets (URL parameter overrides shortcode attribute)
 		$show_closed = isset( $_GET['mets_show_closed'] ) ? true : ( $atts['show_closed'] === 'yes' );
-		
+
 		// Build query args
 		$args = array(
 			'customer_email' => $current_user->user_email,
@@ -541,22 +541,83 @@ class METS_Public {
 			'order_by' => 'created_at',
 			'order' => 'DESC',
 		);
-		
-		// Include closed tickets if requested
-		if ( ! $show_closed ) {
+
+		// Advanced filtering
+		// Keyword search (searches subject and description)
+		if ( ! empty( $_GET['mets_search'] ) ) {
+			$args['search'] = sanitize_text_field( $_GET['mets_search'] );
+		}
+
+		// Status filter
+		if ( ! empty( $_GET['mets_status'] ) && $_GET['mets_status'] !== 'all' ) {
+			$args['status'] = sanitize_text_field( $_GET['mets_status'] );
+		} elseif ( ! $show_closed ) {
+			// Include closed tickets if requested
 			$args['exclude_statuses'] = array( 'closed' );
+		}
+
+		// Priority filter
+		if ( ! empty( $_GET['mets_priority'] ) && $_GET['mets_priority'] !== 'all' ) {
+			$args['priority'] = sanitize_text_field( $_GET['mets_priority'] );
+		}
+
+		// Category filter
+		if ( ! empty( $_GET['mets_category'] ) && $_GET['mets_category'] !== 'all' ) {
+			$args['category'] = sanitize_text_field( $_GET['mets_category'] );
+		}
+
+		// Date range filter
+		if ( ! empty( $_GET['mets_date_from'] ) ) {
+			$args['date_from'] = sanitize_text_field( $_GET['mets_date_from'] );
+		}
+		if ( ! empty( $_GET['mets_date_to'] ) ) {
+			$args['date_to'] = sanitize_text_field( $_GET['mets_date_to'] );
 		}
 		
 		$tickets = $ticket_model->get_all( $args );
-		$total_tickets = $ticket_model->get_count( array(
+
+		// Build count args (same as query args without limit/offset)
+		$count_args = array(
 			'customer_email' => $current_user->user_email,
-			'exclude_statuses' => ! $show_closed ? array( 'closed' ) : array(),
-		) );
-		
-		// Get statuses and priorities for display
+		);
+
+		// Apply same filters to count
+		if ( ! empty( $args['search'] ) ) {
+			$count_args['search'] = $args['search'];
+		}
+		if ( ! empty( $args['status'] ) ) {
+			$count_args['status'] = $args['status'];
+		} elseif ( ! $show_closed ) {
+			$count_args['exclude_statuses'] = array( 'closed' );
+		}
+		if ( ! empty( $args['priority'] ) ) {
+			$count_args['priority'] = $args['priority'];
+		}
+		if ( ! empty( $args['category'] ) ) {
+			$count_args['category'] = $args['category'];
+		}
+		if ( ! empty( $args['date_from'] ) ) {
+			$count_args['date_from'] = $args['date_from'];
+		}
+		if ( ! empty( $args['date_to'] ) ) {
+			$count_args['date_to'] = $args['date_to'];
+		}
+
+		$total_tickets = $ticket_model->get_count( $count_args );
+
+		// Get statuses, priorities, and categories for display
 		$statuses = get_option( 'mets_ticket_statuses', array() );
 		$priorities = get_option( 'mets_ticket_priorities', array() );
-		
+		$categories = get_option( 'mets_ticket_categories', array() );
+
+		// Get current filter values
+		$current_search = isset( $_GET['mets_search'] ) ? sanitize_text_field( $_GET['mets_search'] ) : '';
+		$current_status = isset( $_GET['mets_status'] ) ? sanitize_text_field( $_GET['mets_status'] ) : '';
+		$current_priority = isset( $_GET['mets_priority'] ) ? sanitize_text_field( $_GET['mets_priority'] ) : '';
+		$current_category = isset( $_GET['mets_category'] ) ? sanitize_text_field( $_GET['mets_category'] ) : '';
+		$current_date_from = isset( $_GET['mets_date_from'] ) ? sanitize_text_field( $_GET['mets_date_from'] ) : '';
+		$current_date_to = isset( $_GET['mets_date_to'] ) ? sanitize_text_field( $_GET['mets_date_to'] ) : '';
+
 		// Get general settings for customizable text
 		$general_settings = get_option( 'mets_general_settings', array() );
 		$portal_header_text = isset( $general_settings['portal_header_text'] ) ? $general_settings['portal_header_text'] : __( 'View your support tickets and their current status. Need help?', METS_TEXT_DOMAIN );
@@ -594,31 +655,139 @@ class METS_Public {
 				<?php endif; ?>
 			</div>
 		<?php else : ?>
-			<!-- Filter Options -->
-			<div class="mets-portal-filters">
-				<div class="mets-filter-group">
-					<label for="mets-status-filter"><?php _e( 'Filter by Status:', METS_TEXT_DOMAIN ); ?></label>
-					<select id="mets-status-filter">
-						<option value=""><?php _e( 'All Statuses', METS_TEXT_DOMAIN ); ?></option>
-						<?php foreach ( $statuses as $status_key => $status_data ) : ?>
-							<option value="<?php echo esc_attr( $status_key ); ?>">
-								<?php echo esc_html( $status_data['label'] ); ?>
-							</option>
-						<?php endforeach; ?>
-					</select>
-				</div>
-				
-				<?php if ( ! $show_closed ) : ?>
-					<div class="mets-filter-group">
-						<a href="<?php echo esc_url( add_query_arg( 'mets_show_closed', '1' ) ); ?>" class="mets-show-closed">
-							<?php _e( 'Show closed tickets', METS_TEXT_DOMAIN ); ?>
-						</a>
+			<!-- Advanced Filter Options -->
+			<div class="mets-portal-filters-advanced">
+				<form method="get" class="mets-filters-form" id="mets-filters-form">
+					<!-- Preserve other query params -->
+					<input type="hidden" name="mets_view" value="<?php echo esc_attr( isset( $_GET['mets_view'] ) ? $_GET['mets_view'] : '' ); ?>">
+					<?php if ( $show_closed ) : ?>
+						<input type="hidden" name="mets_show_closed" value="1">
+					<?php endif; ?>
+
+					<!-- Quick Filter Presets -->
+					<div class="mets-filter-presets">
+						<button type="button" class="mets-preset-filter" data-preset="all">
+							<?php _e( 'All Tickets', METS_TEXT_DOMAIN ); ?>
+						</button>
+						<button type="button" class="mets-preset-filter" data-preset="open">
+							<?php _e( 'Open', METS_TEXT_DOMAIN ); ?>
+						</button>
+						<button type="button" class="mets-preset-filter" data-preset="in_progress">
+							<?php _e( 'In Progress', METS_TEXT_DOMAIN ); ?>
+						</button>
+						<button type="button" class="mets-preset-filter" data-preset="urgent">
+							<?php _e( 'Urgent', METS_TEXT_DOMAIN ); ?>
+						</button>
+						<button type="button" class="mets-preset-filter" data-preset="last_7_days">
+							<?php _e( 'Last 7 Days', METS_TEXT_DOMAIN ); ?>
+						</button>
 					</div>
-				<?php else : ?>
-					<div class="mets-filter-group">
-						<a href="<?php echo esc_url( remove_query_arg( 'mets_show_closed' ) ); ?>" class="mets-hide-closed">
-							<?php _e( 'Hide closed tickets', METS_TEXT_DOMAIN ); ?>
-						</a>
+
+					<!-- Filter Fields -->
+					<div class="mets-filter-fields">
+						<!-- Keyword Search -->
+						<div class="mets-filter-group">
+							<label for="mets-search-input"><?php _e( 'Search:', METS_TEXT_DOMAIN ); ?></label>
+							<input type="text"
+								   id="mets-search-input"
+								   name="mets_search"
+								   value="<?php echo esc_attr( $current_search ); ?>"
+								   placeholder="<?php esc_attr_e( 'Search by subject or content...', METS_TEXT_DOMAIN ); ?>">
+						</div>
+
+						<!-- Status Filter -->
+						<div class="mets-filter-group">
+							<label for="mets-status-filter"><?php _e( 'Status:', METS_TEXT_DOMAIN ); ?></label>
+							<select id="mets-status-filter" name="mets_status">
+								<option value="all" <?php selected( $current_status, 'all' ); ?>><?php _e( 'All Statuses', METS_TEXT_DOMAIN ); ?></option>
+								<?php foreach ( $statuses as $status_key => $status_data ) : ?>
+									<option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $current_status, $status_key ); ?>>
+										<?php echo esc_html( $status_data['label'] ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+						</div>
+
+						<!-- Priority Filter -->
+						<div class="mets-filter-group">
+							<label for="mets-priority-filter"><?php _e( 'Priority:', METS_TEXT_DOMAIN ); ?></label>
+							<select id="mets-priority-filter" name="mets_priority">
+								<option value="all" <?php selected( $current_priority, 'all' ); ?>><?php _e( 'All Priorities', METS_TEXT_DOMAIN ); ?></option>
+								<?php foreach ( $priorities as $priority_key => $priority_data ) : ?>
+									<option value="<?php echo esc_attr( $priority_key ); ?>" <?php selected( $current_priority, $priority_key ); ?>>
+										<?php echo esc_html( $priority_data['label'] ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+						</div>
+
+						<!-- Category Filter -->
+						<?php if ( ! empty( $categories ) ) : ?>
+							<div class="mets-filter-group">
+								<label for="mets-category-filter"><?php _e( 'Category:', METS_TEXT_DOMAIN ); ?></label>
+								<select id="mets-category-filter" name="mets_category">
+									<option value="all" <?php selected( $current_category, 'all' ); ?>><?php _e( 'All Categories', METS_TEXT_DOMAIN ); ?></option>
+									<?php foreach ( $categories as $category_key => $category_data ) : ?>
+										<option value="<?php echo esc_attr( $category_key ); ?>" <?php selected( $current_category, $category_key ); ?>>
+											<?php echo esc_html( $category_data['label'] ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+						<?php endif; ?>
+
+						<!-- Date Range Filter -->
+						<div class="mets-filter-group">
+							<label for="mets-date-from"><?php _e( 'Date From:', METS_TEXT_DOMAIN ); ?></label>
+							<input type="date"
+								   id="mets-date-from"
+								   name="mets_date_from"
+								   value="<?php echo esc_attr( $current_date_from ); ?>">
+						</div>
+
+						<div class="mets-filter-group">
+							<label for="mets-date-to"><?php _e( 'Date To:', METS_TEXT_DOMAIN ); ?></label>
+							<input type="date"
+								   id="mets-date-to"
+								   name="mets_date_to"
+								   value="<?php echo esc_attr( $current_date_to ); ?>">
+						</div>
+
+						<!-- Filter Actions -->
+						<div class="mets-filter-actions">
+							<button type="submit" class="button button-primary">
+								<?php _e( 'Apply Filters', METS_TEXT_DOMAIN ); ?>
+							</button>
+							<a href="<?php echo esc_url( strtok( $_SERVER['REQUEST_URI'], '?' ) ); ?>" class="button button-secondary">
+								<?php _e( 'Clear All', METS_TEXT_DOMAIN ); ?>
+							</a>
+							<?php if ( ! $show_closed ) : ?>
+								<a href="<?php echo esc_url( add_query_arg( 'mets_show_closed', '1' ) ); ?>" class="button button-secondary">
+									<?php _e( 'Show Closed', METS_TEXT_DOMAIN ); ?>
+								</a>
+							<?php else : ?>
+								<a href="<?php echo esc_url( remove_query_arg( 'mets_show_closed' ) ); ?>" class="button button-secondary">
+									<?php _e( 'Hide Closed', METS_TEXT_DOMAIN ); ?>
+								</a>
+							<?php endif; ?>
+						</div>
+					</div>
+				</form>
+
+				<?php
+				// Display active filters count
+				$active_filters = 0;
+				if ( ! empty( $current_search ) ) $active_filters++;
+				if ( ! empty( $current_status ) && $current_status !== 'all' ) $active_filters++;
+				if ( ! empty( $current_priority ) && $current_priority !== 'all' ) $active_filters++;
+				if ( ! empty( $current_category ) && $current_category !== 'all' ) $active_filters++;
+				if ( ! empty( $current_date_from ) || ! empty( $current_date_to ) ) $active_filters++;
+
+				if ( $active_filters > 0 ) :
+				?>
+					<div class="mets-active-filters-notice">
+						<?php printf( _n( '%d filter active', '%d filters active', $active_filters, METS_TEXT_DOMAIN ), $active_filters ); ?> |
+						<?php printf( _n( '%d result found', '%d results found', $total_tickets, METS_TEXT_DOMAIN ), $total_tickets ); ?>
 					</div>
 				<?php endif; ?>
 			</div>
@@ -716,17 +885,74 @@ class METS_Public {
 
 		<script>
 		jQuery(document).ready(function($) {
-			// Status filter functionality
-			$('#mets-status-filter').on('change', function() {
-				var selectedStatus = $(this).val();
-				$('.mets-tickets-table tbody tr').each(function() {
-					var ticketStatus = $(this).data('status');
-					if (selectedStatus === '' || ticketStatus === selectedStatus) {
-						$(this).show();
-					} else {
-						$(this).hide();
-					}
-				});
+			// Preset filter buttons
+			$('.mets-preset-filter').on('click', function(e) {
+				e.preventDefault();
+				var preset = $(this).data('preset');
+				var form = $('#mets-filters-form');
+
+				// Reset all filters
+				form.find('#mets-search-input').val('');
+				form.find('#mets-status-filter').val('all');
+				form.find('#mets-priority-filter').val('all');
+				form.find('#mets-category-filter').val('all');
+				form.find('#mets-date-from').val('');
+				form.find('#mets-date-to').val('');
+
+				// Apply preset
+				switch(preset) {
+					case 'all':
+						// No filters
+						break;
+					case 'open':
+						form.find('#mets-status-filter').val('open');
+						break;
+					case 'in_progress':
+						form.find('#mets-status-filter').val('in_progress');
+						break;
+					case 'urgent':
+						form.find('#mets-priority-filter').val('urgent');
+						break;
+					case 'last_7_days':
+						var today = new Date();
+						var sevenDaysAgo = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000));
+						var dateFrom = sevenDaysAgo.toISOString().split('T')[0];
+						var dateTo = today.toISOString().split('T')[0];
+						form.find('#mets-date-from').val(dateFrom);
+						form.find('#mets-date-to').val(dateTo);
+						break;
+				}
+
+				// Submit form
+				form.submit();
+			});
+
+			// Highlight active preset based on current filters
+			var currentStatus = $('#mets-status-filter').val();
+			var currentPriority = $('#mets-priority-filter').val();
+
+			$('.mets-preset-filter').each(function() {
+				var preset = $(this).data('preset');
+				var isActive = false;
+
+				switch(preset) {
+					case 'all':
+						if (!currentStatus && !currentPriority) isActive = true;
+						break;
+					case 'open':
+						if (currentStatus === 'open') isActive = true;
+						break;
+					case 'in_progress':
+						if (currentStatus === 'in_progress') isActive = true;
+						break;
+					case 'urgent':
+						if (currentPriority === 'urgent') isActive = true;
+						break;
+				}
+
+				if (isActive) {
+					$(this).addClass('active');
+				}
 			});
 		});
 		</script>
@@ -1233,11 +1459,103 @@ class METS_Public {
 					</form>
 				</div>
 			<?php else : ?>
+				<?php
+				// Check if ticket can be reopened (closed within 7 days)
+				$closed_date = strtotime( $ticket->updated_at );
+				$days_since_closed = floor( ( time() - $closed_date ) / ( 60 * 60 * 24 ) );
+				$can_reopen = ( $days_since_closed <= 7 );
+				?>
+
 				<div class="mets-ticket-closed">
-					<p><?php _e( 'This ticket has been closed. If you need further assistance, please submit a new ticket.', METS_TEXT_DOMAIN ); ?></p>
+					<?php if ( $can_reopen ) : ?>
+						<div class="mets-reopen-section">
+							<p><?php _e( 'This ticket has been closed.', METS_TEXT_DOMAIN ); ?></p>
+							<p><?php _e( 'If you need to continue the conversation, you can reopen this ticket.', METS_TEXT_DOMAIN ); ?></p>
+							<form id="mets-reopen-ticket-form" method="post" style="margin-top: 15px;">
+								<?php wp_nonce_field( 'mets_reopen_ticket', 'reopen_ticket_nonce' ); ?>
+								<input type="hidden" name="ticket_id" value="<?php echo esc_attr( $ticket->id ); ?>">
+
+								<div class="mets-form-group">
+									<label for="reopen_reason"><?php _e( 'Reason for reopening (optional):', METS_TEXT_DOMAIN ); ?></label>
+									<textarea id="reopen_reason" name="reopen_reason" rows="4" placeholder="<?php esc_attr_e( 'Let us know why you need to reopen this ticket...', METS_TEXT_DOMAIN ); ?>"></textarea>
+								</div>
+
+								<div class="mets-form-actions">
+									<button type="submit" class="button button-primary">
+										<?php _e( 'Reopen Ticket', METS_TEXT_DOMAIN ); ?>
+									</button>
+									<span class="mets-loading" style="display: none;"><?php _e( 'Reopening...', METS_TEXT_DOMAIN ); ?></span>
+								</div>
+
+								<div class="mets-form-messages">
+									<div class="mets-success-message" style="display: none;"></div>
+									<div class="mets-error-message" style="display: none;"></div>
+								</div>
+							</form>
+						</div>
+					<?php else : ?>
+						<p><?php printf( __( 'This ticket was closed %d days ago and can no longer be reopened.', METS_TEXT_DOMAIN ), $days_since_closed ); ?></p>
+						<p><?php _e( 'If you need further assistance, please submit a new ticket.', METS_TEXT_DOMAIN ); ?></p>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 		</div>
+
+		<script>
+		jQuery(document).ready(function($) {
+			// Handle reopen ticket form submission
+			$('#mets-reopen-ticket-form').on('submit', function(e) {
+				e.preventDefault();
+
+				var form = $(this);
+				var submitButton = form.find('button[type="submit"]');
+				var loading = form.find('.mets-loading');
+				var successMsg = form.find('.mets-success-message');
+				var errorMsg = form.find('.mets-error-message');
+
+				// Hide previous messages
+				successMsg.hide();
+				errorMsg.hide();
+
+				// Show loading
+				submitButton.prop('disabled', true);
+				loading.show();
+
+				$.ajax({
+					url: metsPublicData.ajaxUrl,
+					type: 'POST',
+					data: {
+						action: 'mets_reopen_ticket',
+						nonce: metsPublicData.nonce,
+						ticket_id: form.find('input[name="ticket_id"]').val(),
+						reopen_reason: form.find('textarea[name="reopen_reason"]').val()
+					},
+					success: function(response) {
+						loading.hide();
+
+						if (response.success) {
+							successMsg.html(response.data.message).show();
+
+							// Reload page after 2 seconds if reload flag is set
+							if (response.data.reload) {
+								setTimeout(function() {
+									location.reload();
+								}, 2000);
+							}
+						} else {
+							errorMsg.html(response.data.message).show();
+							submitButton.prop('disabled', false);
+						}
+					},
+					error: function(xhr, status, error) {
+						loading.hide();
+						errorMsg.html('<?php _e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?>').show();
+						submitButton.prop('disabled', false);
+					}
+				});
+			});
+		});
+		</script>
 		<?php
 		return ob_get_clean();
 	}
@@ -1497,6 +1815,109 @@ class METS_Public {
 		
 		wp_send_json_success( array(
 			'message' => __( 'Your reply has been sent successfully.', METS_TEXT_DOMAIN )
+		) );
+	}
+
+	/**
+	 * AJAX reopen ticket
+	 *
+	 * Allows customers to reopen closed tickets within 7 days
+	 *
+	 * @since    1.0.1
+	 */
+	public function ajax_reopen_ticket() {
+		check_ajax_referer( 'mets_public_nonce', 'nonce' );
+
+		// Check if user is logged in
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array(
+				'message' => __( 'You must be logged in to reopen tickets.', METS_TEXT_DOMAIN )
+			) );
+		}
+
+		// Validate ticket ID
+		$ticket_id = intval( $_POST['ticket_id'] ?? 0 );
+		$reopen_reason = wp_kses_post( $_POST['reopen_reason'] ?? '' );
+
+		if ( ! $ticket_id ) {
+			wp_send_json_error( array(
+				'message' => __( 'Missing ticket ID.', METS_TEXT_DOMAIN )
+			) );
+		}
+
+		// Load models
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-reply-model.php';
+
+		$ticket_model = new METS_Ticket_Model();
+		$reply_model = new METS_Ticket_Reply_Model();
+
+		// Verify ticket exists and customer ownership
+		$ticket = $ticket_model->get( $ticket_id );
+		$current_user = wp_get_current_user();
+
+		if ( ! $ticket || $ticket->customer_email !== $current_user->user_email ) {
+			wp_send_json_error( array(
+				'message' => __( 'Ticket not found or access denied.', METS_TEXT_DOMAIN )
+			) );
+		}
+
+		// Check if ticket is actually closed
+		if ( $ticket->status !== 'closed' ) {
+			wp_send_json_error( array(
+				'message' => __( 'This ticket is not closed.', METS_TEXT_DOMAIN )
+			) );
+		}
+
+		// Check if ticket was closed within 7 days
+		$closed_date = strtotime( $ticket->updated_at );
+		$days_since_closed = floor( ( time() - $closed_date ) / ( 60 * 60 * 24 ) );
+
+		if ( $days_since_closed > 7 ) {
+			wp_send_json_error( array(
+				'message' => sprintf(
+					__( 'This ticket was closed %d days ago and can no longer be reopened. Please submit a new ticket.', METS_TEXT_DOMAIN ),
+					$days_since_closed
+				)
+			) );
+		}
+
+		// Reopen the ticket (set to 'open' status)
+		$result = $ticket_model->update( $ticket_id, array(
+			'status'     => 'open',
+			'updated_at' => current_time( 'mysql' ),
+		) );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array(
+				'message' => $result->get_error_message()
+			) );
+		}
+
+		// Add system note about reopening
+		$reopen_message = sprintf(
+			__( 'Ticket reopened by %s.', METS_TEXT_DOMAIN ),
+			$current_user->display_name
+		);
+
+		if ( ! empty( $reopen_reason ) ) {
+			$reopen_message .= "\n\n" . __( 'Reason:', METS_TEXT_DOMAIN ) . ' ' . $reopen_reason;
+		}
+
+		$reply_model->create( array(
+			'ticket_id'        => $ticket_id,
+			'user_id'          => $current_user->ID,
+			'user_type'        => 'customer',
+			'content'          => $reopen_message,
+			'is_internal_note' => false,
+		) );
+
+		// Trigger action for notifications
+		do_action( 'mets_ticket_reopened', $ticket_id, $current_user->ID );
+
+		wp_send_json_success( array(
+			'message' => __( 'Ticket has been reopened successfully. You can now continue the conversation.', METS_TEXT_DOMAIN ),
+			'reload'  => true, // Signal to reload the page
 		) );
 	}
 
