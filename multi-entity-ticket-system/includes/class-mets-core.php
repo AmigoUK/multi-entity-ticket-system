@@ -274,6 +274,9 @@ class METS_Core {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 		$this->loader->add_action( 'init', $plugin_public, 'register_shortcodes' );
 
+		// Satisfaction survey hooks
+		$this->loader->add_action( 'template_redirect', $plugin_public, 'handle_satisfaction_survey' );
+
 		// AJAX hooks for public functionality
 		$this->loader->add_action( 'wp_ajax_mets_submit_ticket', $plugin_public, 'ajax_submit_ticket' );
 		$this->loader->add_action( 'wp_ajax_nopriv_mets_submit_ticket', $plugin_public, 'ajax_submit_ticket' );
@@ -284,6 +287,8 @@ class METS_Core {
 		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_entities_public', $plugin_public, 'ajax_search_entities' );
 		$this->loader->add_action( 'wp_ajax_mets_search_kb_articles', $plugin_public, 'ajax_search_kb_articles' );
 		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_kb_articles', $plugin_public, 'ajax_search_kb_articles' );
+		$this->loader->add_action( 'wp_ajax_mets_submit_survey', $plugin_public, 'ajax_submit_survey' );
+		$this->loader->add_action( 'wp_ajax_nopriv_mets_submit_survey', $plugin_public, 'ajax_submit_survey' );
 	}
 
 	/**

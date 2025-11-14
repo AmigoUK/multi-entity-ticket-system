@@ -1263,4 +1263,413 @@ class METS_Public {
 			'entity' => $article->entity_id
 		), home_url() );
 	}
+
+	/**
+	 * Handle satisfaction survey responses
+	 *
+	 * Processes survey submissions from email links or survey page.
+	 *
+	 * @since    1.0.1
+	 */
+	public function handle_satisfaction_survey() {
+		// Check if this is a survey request
+		if ( ! isset( $_GET['mets_survey'] ) ) {
+			return;
+		}
+
+		$token = sanitize_text_field( $_GET['mets_survey'] );
+
+		// Load survey model
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-satisfaction-survey-model.php';
+		$survey_model = new METS_Satisfaction_Survey_Model();
+
+		// Get survey by token
+		$survey = $survey_model->get_by_token( $token );
+
+		if ( ! $survey ) {
+			wp_die( __( 'Invalid survey link. This survey may have expired or been completed.', METS_TEXT_DOMAIN ), __( 'Survey Not Found', METS_TEXT_DOMAIN ), array( 'response' => 404 ) );
+		}
+
+		// Check if already completed
+		if ( ! empty( $survey->survey_completed_at ) ) {
+			$this->display_survey_thank_you( $survey, true );
+			exit;
+		}
+
+		// Check if rating was provided in URL (one-click from email)
+		if ( isset( $_GET['rating'] ) ) {
+			$rating = intval( $_GET['rating'] );
+
+			if ( $rating >= 1 && $rating <= 5 ) {
+				// Submit the rating
+				$result = $survey_model->submit_response( $token, $rating, '' );
+
+				if ( is_wp_error( $result ) ) {
+					wp_die( $result->get_error_message(), __( 'Survey Error', METS_TEXT_DOMAIN ), array( 'response' => 400 ) );
+				}
+
+				// Refresh survey data
+				$survey = $survey_model->get_by_token( $token );
+
+				// Show thank you page
+				$this->display_survey_thank_you( $survey );
+				exit;
+			}
+		}
+
+		// Show survey form
+		$this->display_survey_form( $survey );
+		exit;
+	}
+
+	/**
+	 * Display survey form
+	 *
+	 * @since    1.0.1
+	 * @param    object    $survey    Survey object
+	 */
+	private function display_survey_form( $survey ) {
+		?>
+		<!DOCTYPE html>
+		<html <?php language_attributes(); ?>>
+		<head>
+			<meta charset="<?php bloginfo( 'charset' ); ?>">
+			<meta name="viewport" content="width=device-width, initial-scale=1">
+			<title><?php _e( 'Customer Satisfaction Survey', METS_TEXT_DOMAIN ); ?> - <?php bloginfo( 'name' ); ?></title>
+			<?php wp_head(); ?>
+			<style>
+				body {
+					font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+					background-color: #f5f5f5;
+					margin: 0;
+					padding: 20px;
+					line-height: 1.6;
+				}
+				.survey-container {
+					max-width: 600px;
+					margin: 40px auto;
+					background: white;
+					border-radius: 8px;
+					padding: 40px;
+					box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+				}
+				.survey-header {
+					text-align: center;
+					margin-bottom: 30px;
+				}
+				.survey-header h1 {
+					color: #007cba;
+					margin: 0 0 10px 0;
+					font-size: 28px;
+				}
+				.survey-header p {
+					color: #666;
+					margin: 5px 0;
+				}
+				.ticket-info {
+					background: #f8f9fa;
+					padding: 15px;
+					border-radius: 6px;
+					margin: 20px 0;
+					border-left: 4px solid #007cba;
+				}
+				.ticket-info p {
+					margin: 5px 0;
+					font-size: 14px;
+				}
+				.rating-section {
+					text-align: center;
+					margin: 30px 0;
+				}
+				.rating-section h2 {
+					color: #333;
+					font-size: 22px;
+					margin-bottom: 20px;
+				}
+				.star-rating {
+					display: inline-flex;
+					gap: 15px;
+					margin: 20px 0;
+				}
+				.star-rating input[type="radio"] {
+					display: none;
+				}
+				.star-rating label {
+					font-size: 50px;
+					color: #ddd;
+					cursor: pointer;
+					transition: all 0.3s;
+				}
+				.star-rating input[type="radio"]:checked ~ label,
+				.star-rating label:hover,
+				.star-rating label:hover ~ label {
+					color: #ffc107;
+				}
+				.star-rating {
+					flex-direction: row-reverse;
+					justify-content: center;
+				}
+				.feedback-section {
+					margin: 30px 0;
+				}
+				.feedback-section label {
+					display: block;
+					margin-bottom: 10px;
+					color: #333;
+					font-weight: 500;
+				}
+				.feedback-section textarea {
+					width: 100%;
+					min-height: 100px;
+					padding: 12px;
+					border: 1px solid #ddd;
+					border-radius: 4px;
+					font-family: inherit;
+					font-size: 14px;
+					resize: vertical;
+				}
+				.submit-button {
+					background: #007cba;
+					color: white;
+					border: none;
+					padding: 15px 40px;
+					font-size: 16px;
+					border-radius: 4px;
+					cursor: pointer;
+					width: 100%;
+					font-weight: 500;
+					transition: background 0.3s;
+				}
+				.submit-button:hover {
+					background: #005a87;
+				}
+				.submit-button:disabled {
+					background: #ccc;
+					cursor: not-allowed;
+				}
+				.error-message {
+					color: #d32f2f;
+					background: #ffebee;
+					padding: 12px;
+					border-radius: 4px;
+					margin: 15px 0;
+					display: none;
+				}
+				.rating-labels {
+					display: flex;
+					justify-content: space-between;
+					margin-top: 10px;
+					font-size: 13px;
+					color: #666;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="survey-container">
+				<div class="survey-header">
+					<h1><?php _e( 'How was your support experience?', METS_TEXT_DOMAIN ); ?></h1>
+					<p><?php _e( 'Your feedback helps us improve!', METS_TEXT_DOMAIN ); ?></p>
+				</div>
+
+				<div class="ticket-info">
+					<p><strong><?php _e( 'Ticket:', METS_TEXT_DOMAIN ); ?></strong> <?php echo esc_html( $survey->ticket_number ); ?></p>
+					<p><strong><?php _e( 'Subject:', METS_TEXT_DOMAIN ); ?></strong> <?php echo esc_html( $survey->subject ); ?></p>
+				</div>
+
+				<form method="post" id="satisfaction-survey-form">
+					<?php wp_nonce_field( 'mets_survey_submit', 'survey_nonce' ); ?>
+					<input type="hidden" name="survey_token" value="<?php echo esc_attr( $survey->survey_token ); ?>">
+					<input type="hidden" name="action" value="mets_submit_survey">
+
+					<div class="rating-section">
+						<h2><?php _e( 'How would you rate your experience?', METS_TEXT_DOMAIN ); ?></h2>
+						<div class="star-rating">
+							<input type="radio" name="rating" value="5" id="star5" required>
+							<label for="star5" title="<?php esc_attr_e( 'Excellent', METS_TEXT_DOMAIN ); ?>">★</label>
+							<input type="radio" name="rating" value="4" id="star4">
+							<label for="star4" title="<?php esc_attr_e( 'Good', METS_TEXT_DOMAIN ); ?>">★</label>
+							<input type="radio" name="rating" value="3" id="star3">
+							<label for="star3" title="<?php esc_attr_e( 'Average', METS_TEXT_DOMAIN ); ?>">★</label>
+							<input type="radio" name="rating" value="2" id="star2">
+							<label for="star2" title="<?php esc_attr_e( 'Below Average', METS_TEXT_DOMAIN ); ?>">★</label>
+							<input type="radio" name="rating" value="1" id="star1">
+							<label for="star1" title="<?php esc_attr_e( 'Poor', METS_TEXT_DOMAIN ); ?>">★</label>
+						</div>
+						<div class="rating-labels">
+							<span><?php _e( 'Poor', METS_TEXT_DOMAIN ); ?></span>
+							<span><?php _e( 'Excellent', METS_TEXT_DOMAIN ); ?></span>
+						</div>
+					</div>
+
+					<div class="feedback-section">
+						<label for="feedback"><?php _e( 'Additional Comments (Optional)', METS_TEXT_DOMAIN ); ?></label>
+						<textarea name="feedback" id="feedback" placeholder="<?php esc_attr_e( 'Tell us more about your experience...', METS_TEXT_DOMAIN ); ?>"></textarea>
+					</div>
+
+					<div class="error-message" id="error-message"></div>
+
+					<button type="submit" class="submit-button"><?php _e( 'Submit Feedback', METS_TEXT_DOMAIN ); ?></button>
+				</form>
+			</div>
+
+			<script>
+			document.getElementById('satisfaction-survey-form').addEventListener('submit', function(e) {
+				e.preventDefault();
+
+				const rating = document.querySelector('input[name="rating"]:checked');
+				if (!rating) {
+					document.getElementById('error-message').textContent = '<?php echo esc_js( __( 'Please select a rating before submitting.', METS_TEXT_DOMAIN ) ); ?>';
+					document.getElementById('error-message').style.display = 'block';
+					return;
+				}
+
+				this.submit();
+			});
+			</script>
+			<?php wp_footer(); ?>
+		</body>
+		</html>
+		<?php
+	}
+
+	/**
+	 * Display thank you page after survey submission
+	 *
+	 * @since    1.0.1
+	 * @param    object    $survey           Survey object
+	 * @param    bool      $already_completed  Whether survey was already completed
+	 */
+	private function display_survey_thank_you( $survey, $already_completed = false ) {
+		?>
+		<!DOCTYPE html>
+		<html <?php language_attributes(); ?>>
+		<head>
+			<meta charset="<?php bloginfo( 'charset' ); ?>">
+			<meta name="viewport" content="width=device-width, initial-scale=1">
+			<title><?php _e( 'Thank You', METS_TEXT_DOMAIN ); ?> - <?php bloginfo( 'name' ); ?></title>
+			<?php wp_head(); ?>
+			<style>
+				body {
+					font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+					background-color: #f5f5f5;
+					margin: 0;
+					padding: 20px;
+					line-height: 1.6;
+				}
+				.thank-you-container {
+					max-width: 600px;
+					margin: 80px auto;
+					background: white;
+					border-radius: 8px;
+					padding: 60px 40px;
+					box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+					text-align: center;
+				}
+				.success-icon {
+					font-size: 80px;
+					color: #4caf50;
+					margin-bottom: 20px;
+				}
+				.thank-you-container h1 {
+					color: #333;
+					margin: 0 0 15px 0;
+					font-size: 32px;
+				}
+				.thank-you-container p {
+					color: #666;
+					font-size: 16px;
+					margin: 10px 0;
+				}
+				.rating-display {
+					margin: 30px 0;
+					padding: 20px;
+					background: #f8f9fa;
+					border-radius: 6px;
+				}
+				.rating-display .stars {
+					font-size: 40px;
+					color: #ffc107;
+					margin: 10px 0;
+				}
+				.home-link {
+					display: inline-block;
+					margin-top: 30px;
+					padding: 12px 30px;
+					background: #007cba;
+					color: white;
+					text-decoration: none;
+					border-radius: 4px;
+					transition: background 0.3s;
+				}
+				.home-link:hover {
+					background: #005a87;
+				}
+			</style>
+		</head>
+		<body>
+			<div class="thank-you-container">
+				<div class="success-icon">✓</div>
+				<h1><?php _e( 'Thank You for Your Feedback!', METS_TEXT_DOMAIN ); ?></h1>
+
+				<?php if ( $already_completed ) : ?>
+					<p><?php _e( 'You have already completed this survey.', METS_TEXT_DOMAIN ); ?></p>
+				<?php else : ?>
+					<p><?php _e( 'Your feedback has been submitted successfully.', METS_TEXT_DOMAIN ); ?></p>
+				<?php endif; ?>
+
+				<?php if ( ! empty( $survey->rating ) && $survey->rating > 0 ) : ?>
+					<div class="rating-display">
+						<p><strong><?php _e( 'Your Rating:', METS_TEXT_DOMAIN ); ?></strong></p>
+						<div class="stars">
+							<?php echo str_repeat( '★', intval( $survey->rating ) ); ?>
+						</div>
+					</div>
+				<?php endif; ?>
+
+				<p><?php _e( 'We appreciate you taking the time to share your experience with us. Your input helps us provide better support.', METS_TEXT_DOMAIN ); ?></p>
+
+				<a href="<?php echo esc_url( home_url() ); ?>" class="home-link">
+					<?php _e( 'Return to Home Page', METS_TEXT_DOMAIN ); ?>
+				</a>
+			</div>
+			<?php wp_footer(); ?>
+		</body>
+		</html>
+		<?php
+	}
+
+	/**
+	 * Handle survey form submission
+	 *
+	 * @since    1.0.1
+	 */
+	public function ajax_submit_survey() {
+		check_ajax_referer( 'mets_public_nonce', 'nonce' );
+
+		$token = isset( $_POST['survey_token'] ) ? sanitize_text_field( $_POST['survey_token'] ) : '';
+		$rating = isset( $_POST['rating'] ) ? intval( $_POST['rating'] ) : 0;
+		$feedback = isset( $_POST['feedback'] ) ? sanitize_textarea_field( $_POST['feedback'] ) : '';
+
+		if ( empty( $token ) || $rating < 1 || $rating > 5 ) {
+			wp_send_json_error( array(
+				'message' => __( 'Invalid survey data.', METS_TEXT_DOMAIN ),
+			) );
+		}
+
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-satisfaction-survey-model.php';
+		$survey_model = new METS_Satisfaction_Survey_Model();
+
+		$result = $survey_model->submit_response( $token, $rating, $feedback );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array(
+				'message' => $result->get_error_message(),
+			) );
+		}
+
+		wp_send_json_success( array(
+			'message' => __( 'Thank you for your feedback!', METS_TEXT_DOMAIN ),
+			'redirect' => home_url( '/?mets_survey=' . $token ),
+		) );
+	}
 }

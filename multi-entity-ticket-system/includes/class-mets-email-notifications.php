@@ -71,10 +71,13 @@ class METS_Email_Notifications {
 		add_action( 'mets_ticket_replied', array( $this, 'on_ticket_replied' ), 10, 3 );
 		add_action( 'mets_ticket_assigned', array( $this, 'on_ticket_assigned' ), 10, 3 );
 		add_action( 'mets_ticket_status_changed', array( $this, 'on_status_changed' ), 10, 4 );
-		
+
 		// SLA hooks
 		add_action( 'mets_sla_approaching_breach', array( $this, 'on_sla_warning' ), 10, 1 );
 		add_action( 'mets_sla_breached', array( $this, 'on_sla_breach' ), 10, 1 );
+
+		// Satisfaction survey hooks
+		add_action( 'mets_send_satisfaction_survey', array( $this, 'send_satisfaction_survey' ), 10, 1 );
 	}
 
 	/**
@@ -189,7 +192,7 @@ class METS_Email_Notifications {
 	 */
 	public function on_status_changed( $ticket_id, $old_status, $new_status, $user_id ) {
 		$ticket = $this->get_ticket_data( $ticket_id );
-		
+
 		if ( ! $ticket ) {
 			return;
 		}
@@ -204,9 +207,12 @@ class METS_Email_Notifications {
 		$ticket['old_status'] = $old_status;
 		$ticket['new_status'] = $new_status;
 		$ticket['status_changed_by'] = $this->get_user_display_name( $user_id );
-		
+
 		// Send notification to customer
 		$this->send_customer_notification( $ticket, 'ticket-status-changed' );
+
+		// Schedule satisfaction survey if ticket is resolved or closed
+		$this->schedule_satisfaction_survey( $ticket_id, $old_status, $new_status );
 	}
 
 	/**
@@ -447,5 +453,155 @@ class METS_Email_Notifications {
 			'template_data' => $sample_ticket,
 			'entity_id' => $entity_id,
 		) );
+	}
+
+	/**
+	 * Schedule satisfaction survey after ticket resolution
+	 *
+	 * Schedules a survey to be sent 24 hours after ticket is resolved/closed.
+	 * Checks frequency limit (1 per month per customer).
+	 *
+	 * @since    1.0.1
+	 * @param    int       $ticket_id     Ticket ID
+	 * @param    string    $old_status    Old status
+	 * @param    string    $new_status    New status
+	 */
+	public function schedule_satisfaction_survey( $ticket_id, $old_status, $new_status ) {
+		// Only trigger on resolution or closure
+		if ( ! in_array( $new_status, array( 'resolved', 'closed' ) ) ) {
+			return;
+		}
+
+		// Don't trigger if already in resolved/closed state
+		if ( in_array( $old_status, array( 'resolved', 'closed' ) ) ) {
+			return;
+		}
+
+		// Check if surveys are enabled
+		$survey_settings = get_option( 'mets_survey_settings', array() );
+		if ( empty( $survey_settings['enabled'] ) ) {
+			return;
+		}
+
+		$ticket = $this->get_ticket_data( $ticket_id );
+		if ( ! $ticket ) {
+			return;
+		}
+
+		// Load survey model
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-satisfaction-survey-model.php';
+		$survey_model = new METS_Satisfaction_Survey_Model();
+
+		// Check frequency limit (1 per month per customer)
+		if ( ! $survey_model->can_receive_survey( $ticket['customer_email'] ) ) {
+			error_log( sprintf(
+				'METS: Customer %s has received a survey in the last 30 days. Skipping survey for ticket #%s.',
+				$ticket['customer_email'],
+				$ticket['ticket_number']
+			) );
+			return;
+		}
+
+		// Create survey record
+		$survey_id = $survey_model->create(
+			$ticket_id,
+			$ticket['customer_email'],
+			$ticket['assigned_to'],
+			$ticket['entity_id']
+		);
+
+		if ( is_wp_error( $survey_id ) ) {
+			error_log( 'METS: Failed to create satisfaction survey: ' . $survey_id->get_error_message() );
+			return;
+		}
+
+		// Schedule the survey to be sent 24 hours from now
+		$send_time = time() + ( 24 * HOUR_IN_SECONDS );
+		wp_schedule_single_event( $send_time, 'mets_send_satisfaction_survey', array( $survey_id ) );
+
+		error_log( sprintf(
+			'METS: Satisfaction survey #%d scheduled for ticket #%s to be sent at %s',
+			$survey_id,
+			$ticket['ticket_number'],
+			date( 'Y-m-d H:i:s', $send_time )
+		) );
+	}
+
+	/**
+	 * Send satisfaction survey email
+	 *
+	 * Called by WordPress cron 24 hours after ticket resolution.
+	 *
+	 * @since    1.0.1
+	 * @param    int    $survey_id    Survey ID
+	 */
+	public function send_satisfaction_survey( $survey_id ) {
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-satisfaction-survey-model.php';
+		$survey_model = new METS_Satisfaction_Survey_Model();
+
+		// Get survey by ID
+		global $wpdb;
+		$survey = $wpdb->get_row( $wpdb->prepare(
+			"SELECT s.*, t.ticket_number, t.subject, t.customer_name, t.customer_email,
+			        t.resolved_at, t.closed_at, e.name as entity_name
+			FROM {$wpdb->prefix}mets_satisfaction_surveys s
+			LEFT JOIN {$wpdb->prefix}mets_tickets t ON s.ticket_id = t.id
+			LEFT JOIN {$wpdb->prefix}mets_entities e ON s.entity_id = e.id
+			WHERE s.id = %d",
+			$survey_id
+		) );
+
+		if ( ! $survey ) {
+			error_log( 'METS: Survey #' . $survey_id . ' not found.' );
+			return;
+		}
+
+		// Check if survey was already completed
+		if ( ! empty( $survey->survey_completed_at ) ) {
+			error_log( 'METS: Survey #' . $survey_id . ' already completed. Skipping email.' );
+			return;
+		}
+
+		// Prepare survey URLs
+		$base_survey_url = home_url( '/' ) . '?mets_survey=' . $survey->survey_token;
+
+		$template_data = array(
+			'ticket_id'        => $survey->ticket_id,
+			'ticket_number'    => $survey->ticket_number,
+			'ticket_subject'   => $survey->subject,
+			'customer_name'    => $survey->customer_name,
+			'customer_email'   => $survey->customer_email,
+			'entity_name'      => $survey->entity_name,
+			'entity_id'        => $survey->entity_id,
+			'resolved_date'    => wp_date( get_option( 'date_format' ), strtotime( $survey->resolved_at ?: $survey->closed_at ) ),
+			'survey_url'       => $base_survey_url,
+			'rating_1_url'     => $base_survey_url . '&rating=1',
+			'rating_2_url'     => $base_survey_url . '&rating=2',
+			'rating_3_url'     => $base_survey_url . '&rating=3',
+			'rating_4_url'     => $base_survey_url . '&rating=4',
+			'rating_5_url'     => $base_survey_url . '&rating=5',
+			'site_name'        => get_bloginfo( 'name' ),
+			'site_url'         => home_url(),
+		);
+
+		// Queue the email
+		$result = $this->email_queue->queue_email( array(
+			'recipient_email' => $survey->customer_email,
+			'recipient_name'  => $survey->customer_name,
+			'template_name'   => 'satisfaction-survey',
+			'template_data'   => $template_data,
+			'entity_id'       => $survey->entity_id,
+			'priority'        => 5, // Normal priority
+		) );
+
+		if ( $result ) {
+			error_log( sprintf(
+				'METS: Satisfaction survey email queued for ticket #%s (survey #%d)',
+				$survey->ticket_number,
+				$survey_id
+			) );
+		} else {
+			error_log( 'METS: Failed to queue satisfaction survey email for survey #' . $survey_id );
+		}
 	}
 }
