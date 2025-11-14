@@ -489,8 +489,22 @@ class METS_Public {
 		ob_start();
 		?>
 		<div class="mets-customer-portal">
+			<!-- Portal Navigation -->
+			<div class="mets-portal-nav">
+				<a href="<?php echo esc_url( remove_query_arg( array( 'mets_view', 'mets_ticket' ) ) ); ?>"
+				   class="mets-nav-link <?php echo $view === 'list' ? 'active' : ''; ?>">
+					<?php _e( 'My Tickets', METS_TEXT_DOMAIN ); ?>
+				</a>
+				<a href="<?php echo esc_url( add_query_arg( 'mets_view', 'profile' ) ); ?>"
+				   class="mets-nav-link <?php echo $view === 'profile' ? 'active' : ''; ?>">
+					<?php _e( 'Profile & Settings', METS_TEXT_DOMAIN ); ?>
+				</a>
+			</div>
+
 			<?php if ( $view === 'ticket' && $ticket_id ) : ?>
 				<?php echo $this->display_customer_ticket_detail( $ticket_id ); ?>
+			<?php elseif ( $view === 'profile' ) : ?>
+				<?php echo $this->display_customer_profile( $current_user ); ?>
 			<?php else : ?>
 				<?php echo $this->display_customer_ticket_list( $atts, $current_user ); ?>
 			<?php endif; ?>
@@ -838,6 +852,225 @@ class METS_Public {
 				</div>
 			<?php endif; ?>
 		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Display customer profile and settings page
+	 *
+	 * @since    1.0.1
+	 * @param    WP_User    $current_user    Current user object
+	 * @return   string                      HTML output
+	 */
+	private function display_customer_profile( $current_user ) {
+		// Get user's notification preferences
+		$preferences = get_user_meta( $current_user->ID, 'mets_notification_preferences', true );
+		if ( ! is_array( $preferences ) ) {
+			$preferences = array(
+				'email_on_reply'          => true,
+				'email_on_status_change'  => true,
+				'email_on_resolution'     => true,
+				'email_digest'            => 'none', // none, daily, weekly
+			);
+		}
+
+		// Get recent activity
+		global $wpdb;
+		$recent_activity = $wpdb->get_results( $wpdb->prepare(
+			"SELECT t.id, t.ticket_number, t.subject, t.status, t.updated_at,
+			        'ticket' as activity_type
+			FROM {$wpdb->prefix}mets_tickets t
+			WHERE t.customer_email = %s
+			UNION ALL
+			SELECT r.ticket_id as id, t.ticket_number, t.subject, 'reply' as status, r.created_at as updated_at,
+			        'reply' as activity_type
+			FROM {$wpdb->prefix}mets_ticket_replies r
+			INNER JOIN {$wpdb->prefix}mets_tickets t ON r.ticket_id = t.id
+			WHERE t.customer_email = %s AND r.user_type = 'agent'
+			ORDER BY updated_at DESC
+			LIMIT 10",
+			$current_user->user_email,
+			$current_user->user_email
+		) );
+
+		ob_start();
+		?>
+		<div class="mets-customer-profile">
+			<h3><?php _e( 'Profile & Settings', METS_TEXT_DOMAIN ); ?></h3>
+
+			<!-- Contact Information Section -->
+			<div class="mets-profile-section">
+				<h4><?php _e( 'Contact Information', METS_TEXT_DOMAIN ); ?></h4>
+				<form id="mets-update-profile-form" class="mets-profile-form">
+					<?php wp_nonce_field( 'mets_update_profile', 'profile_nonce' ); ?>
+
+					<div class="mets-form-group">
+						<label for="profile_name"><?php _e( 'Name', METS_TEXT_DOMAIN ); ?></label>
+						<input type="text" id="profile_name" name="name" value="<?php echo esc_attr( $current_user->display_name ); ?>" required>
+					</div>
+
+					<div class="mets-form-group">
+						<label for="profile_email"><?php _e( 'Email', METS_TEXT_DOMAIN ); ?></label>
+						<input type="email" id="profile_email" value="<?php echo esc_attr( $current_user->user_email ); ?>" disabled>
+						<small><?php _e( 'Contact support to change your email address', METS_TEXT_DOMAIN ); ?></small>
+					</div>
+
+					<div class="mets-form-group">
+						<label for="profile_phone"><?php _e( 'Phone (Optional)', METS_TEXT_DOMAIN ); ?></label>
+						<input type="tel" id="profile_phone" name="phone" value="<?php echo esc_attr( get_user_meta( $current_user->ID, 'mets_phone', true ) ); ?>">
+					</div>
+
+					<button type="submit" class="mets-button mets-button-primary">
+						<?php _e( 'Save Changes', METS_TEXT_DOMAIN ); ?>
+					</button>
+					<span class="mets-profile-message" style="display:none;"></span>
+				</form>
+			</div>
+
+			<!-- Notification Preferences Section -->
+			<div class="mets-profile-section">
+				<h4><?php _e( 'Notification Preferences', METS_TEXT_DOMAIN ); ?></h4>
+				<form id="mets-update-preferences-form" class="mets-preferences-form">
+					<?php wp_nonce_field( 'mets_update_preferences', 'preferences_nonce' ); ?>
+
+					<div class="mets-checkbox-group">
+						<label>
+							<input type="checkbox" name="email_on_reply" value="1" <?php checked( ! empty( $preferences['email_on_reply'] ) ); ?>>
+							<?php _e( 'Email me when an agent replies to my ticket', METS_TEXT_DOMAIN ); ?>
+						</label>
+					</div>
+
+					<div class="mets-checkbox-group">
+						<label>
+							<input type="checkbox" name="email_on_status_change" value="1" <?php checked( ! empty( $preferences['email_on_status_change'] ) ); ?>>
+							<?php _e( 'Email me when ticket status changes', METS_TEXT_DOMAIN ); ?>
+						</label>
+					</div>
+
+					<div class="mets-checkbox-group">
+						<label>
+							<input type="checkbox" name="email_on_resolution" value="1" <?php checked( ! empty( $preferences['email_on_resolution'] ) ); ?>>
+							<?php _e( 'Email me when my ticket is resolved', METS_TEXT_DOMAIN ); ?>
+						</label>
+					</div>
+
+					<div class="mets-form-group">
+						<label for="email_digest"><?php _e( 'Email Digest', METS_TEXT_DOMAIN ); ?></label>
+						<select id="email_digest" name="email_digest">
+							<option value="none" <?php selected( $preferences['email_digest'], 'none' ); ?>>
+								<?php _e( 'None - Send emails immediately', METS_TEXT_DOMAIN ); ?>
+							</option>
+							<option value="daily" <?php selected( $preferences['email_digest'], 'daily' ); ?>>
+								<?php _e( 'Daily Digest', METS_TEXT_DOMAIN ); ?>
+							</option>
+							<option value="weekly" <?php selected( $preferences['email_digest'], 'weekly' ); ?>>
+								<?php _e( 'Weekly Digest', METS_TEXT_DOMAIN ); ?>
+							</option>
+						</select>
+						<small><?php _e( 'Receive a summary of all ticket updates in one email', METS_TEXT_DOMAIN ); ?></small>
+					</div>
+
+					<button type="submit" class="mets-button mets-button-primary">
+						<?php _e( 'Save Preferences', METS_TEXT_DOMAIN ); ?>
+					</button>
+					<span class="mets-preferences-message" style="display:none;"></span>
+				</form>
+			</div>
+
+			<!-- Recent Activity Section -->
+			<div class="mets-profile-section">
+				<h4><?php _e( 'Recent Activity', METS_TEXT_DOMAIN ); ?></h4>
+				<?php if ( ! empty( $recent_activity ) ) : ?>
+					<div class="mets-activity-timeline">
+						<?php foreach ( $recent_activity as $activity ) : ?>
+							<div class="mets-activity-item">
+								<div class="mets-activity-icon">
+									<?php echo $activity->activity_type === 'reply' ? '💬' : '🎫'; ?>
+								</div>
+								<div class="mets-activity-content">
+									<p class="mets-activity-title">
+										<?php if ( $activity->activity_type === 'reply' ) : ?>
+											<?php _e( 'New reply on ticket', METS_TEXT_DOMAIN ); ?>
+										<?php else : ?>
+											<?php _e( 'Ticket updated', METS_TEXT_DOMAIN ); ?>
+										<?php endif; ?>
+										<a href="<?php echo esc_url( add_query_arg( array( 'mets_view' => 'ticket', 'mets_ticket' => $activity->id ) ) ); ?>">
+											#<?php echo esc_html( $activity->ticket_number ); ?>
+										</a>
+									</p>
+									<p class="mets-activity-subject"><?php echo esc_html( $activity->subject ); ?></p>
+									<p class="mets-activity-time">
+										<?php echo human_time_diff( strtotime( $activity->updated_at ), current_time( 'timestamp' ) ); ?>
+										<?php _e( 'ago', METS_TEXT_DOMAIN ); ?>
+									</p>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+				<?php else : ?>
+					<p><?php _e( 'No recent activity', METS_TEXT_DOMAIN ); ?></p>
+				<?php endif; ?>
+			</div>
+		</div>
+
+		<script>
+		jQuery(document).ready(function($) {
+			// Handle profile update
+			$('#mets-update-profile-form').on('submit', function(e) {
+				e.preventDefault();
+				var $form = $(this);
+				var $message = $form.find('.mets-profile-message');
+
+				$.ajax({
+					url: mets_public_ajax.ajax_url,
+					type: 'POST',
+					data: {
+						action: 'mets_update_customer_profile',
+						nonce: mets_public_ajax.nonce,
+						name: $('#profile_name').val(),
+						phone: $('#profile_phone').val()
+					},
+					success: function(response) {
+						if (response.success) {
+							$message.text('<?php echo esc_js( __( 'Profile updated successfully!', METS_TEXT_DOMAIN ) ); ?>').css('color', '#4caf50').show();
+						} else {
+							$message.text(response.data.message || '<?php echo esc_js( __( 'Failed to update profile', METS_TEXT_DOMAIN ) ); ?>').css('color', '#d32f2f').show();
+						}
+						setTimeout(function() { $message.fadeOut(); }, 3000);
+					}
+				});
+			});
+
+			// Handle preferences update
+			$('#mets-update-preferences-form').on('submit', function(e) {
+				e.preventDefault();
+				var $form = $(this);
+				var $message = $form.find('.mets-preferences-message');
+
+				$.ajax({
+					url: mets_public_ajax.ajax_url,
+					type: 'POST',
+					data: {
+						action: 'mets_update_notification_preferences',
+						nonce: mets_public_ajax.nonce,
+						email_on_reply: $('input[name="email_on_reply"]').is(':checked') ? 1 : 0,
+						email_on_status_change: $('input[name="email_on_status_change"]').is(':checked') ? 1 : 0,
+						email_on_resolution: $('input[name="email_on_resolution"]').is(':checked') ? 1 : 0,
+						email_digest: $('#email_digest').val()
+					},
+					success: function(response) {
+						if (response.success) {
+							$message.text('<?php echo esc_js( __( 'Preferences saved successfully!', METS_TEXT_DOMAIN ) ); ?>').css('color', '#4caf50').show();
+						} else {
+							$message.text(response.data.message || '<?php echo esc_js( __( 'Failed to save preferences', METS_TEXT_DOMAIN ) ); ?>').css('color', '#d32f2f').show();
+						}
+						setTimeout(function() { $message.fadeOut(); }, 3000);
+					}
+				});
+			});
+		});
+		</script>
 		<?php
 		return ob_get_clean();
 	}
@@ -1795,6 +2028,86 @@ class METS_Public {
 		wp_send_json_success( array(
 			'message' => __( 'Thank you for your feedback!', METS_TEXT_DOMAIN ),
 			'redirect' => home_url( '/?mets_survey=' . $token ),
+		) );
+	}
+
+	/**
+	 * AJAX handler for updating customer profile
+	 *
+	 * @since    1.0.1
+	 */
+	public function ajax_update_customer_profile() {
+		check_ajax_referer( 'mets_public_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array(
+				'message' => __( 'You must be logged in.', METS_TEXT_DOMAIN ),
+			) );
+		}
+
+		$current_user = wp_get_current_user();
+		$name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+		$phone = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
+
+		if ( empty( $name ) ) {
+			wp_send_json_error( array(
+				'message' => __( 'Name is required.', METS_TEXT_DOMAIN ),
+			) );
+		}
+
+		// Update display name
+		$updated = wp_update_user( array(
+			'ID'           => $current_user->ID,
+			'display_name' => $name,
+		) );
+
+		if ( is_wp_error( $updated ) ) {
+			wp_send_json_error( array(
+				'message' => $updated->get_error_message(),
+			) );
+		}
+
+		// Update phone
+		update_user_meta( $current_user->ID, 'mets_phone', $phone );
+
+		wp_send_json_success( array(
+			'message' => __( 'Profile updated successfully!', METS_TEXT_DOMAIN ),
+		) );
+	}
+
+	/**
+	 * AJAX handler for updating notification preferences
+	 *
+	 * @since    1.0.1
+	 */
+	public function ajax_update_notification_preferences() {
+		check_ajax_referer( 'mets_public_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array(
+				'message' => __( 'You must be logged in.', METS_TEXT_DOMAIN ),
+			) );
+		}
+
+		$current_user = wp_get_current_user();
+
+		$preferences = array(
+			'email_on_reply'         => ! empty( $_POST['email_on_reply'] ),
+			'email_on_status_change' => ! empty( $_POST['email_on_status_change'] ),
+			'email_on_resolution'    => ! empty( $_POST['email_on_resolution'] ),
+			'email_digest'           => isset( $_POST['email_digest'] ) ? sanitize_text_field( $_POST['email_digest'] ) : 'none',
+		);
+
+		// Validate email_digest value
+		if ( ! in_array( $preferences['email_digest'], array( 'none', 'daily', 'weekly' ) ) ) {
+			$preferences['email_digest'] = 'none';
+		}
+
+		// Save preferences
+		update_user_meta( $current_user->ID, 'mets_notification_preferences', $preferences );
+
+		wp_send_json_success( array(
+			'message' => __( 'Preferences saved successfully!', METS_TEXT_DOMAIN ),
 		) );
 	}
 }

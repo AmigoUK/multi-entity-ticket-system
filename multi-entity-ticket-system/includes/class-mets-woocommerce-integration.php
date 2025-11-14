@@ -132,36 +132,18 @@ class METS_WooCommerce_Integration {
 	 * Display support tickets content in My Account
 	 *
 	 * @since    1.0.0
+	 * @since    1.0.1 Enhanced to use portal shortcode
 	 */
 	public function support_tickets_content() {
 		if ( ! is_user_logged_in() ) {
+			echo '<div class="woocommerce-info">' . esc_html__( 'Please log in to view your support tickets.', METS_TEXT_DOMAIN ) . '</div>';
 			return;
 		}
 
-		$current_user = wp_get_current_user();
-		$customer_id = $current_user->ID;
-
-		// Get customer's tickets
-		global $wpdb;
-		$tickets = $wpdb->get_results( $wpdb->prepare(
-			"SELECT t.*, e.name as entity_name, u.display_name as assigned_agent_name 
-			FROM {$wpdb->prefix}mets_tickets t
-			LEFT JOIN {$wpdb->prefix}mets_entities e ON t.entity_id = e.id
-			LEFT JOIN {$wpdb->users} u ON t.assigned_to = u.ID
-			WHERE t.customer_id = %d
-			ORDER BY t.created_at DESC",
-			$customer_id
-		) );
-
-		// Get customer's orders for ticket creation
-		$orders = wc_get_orders( array(
-			'customer_id' => $customer_id,
-			'limit' => 50,
-			'orderby' => 'date',
-			'order' => 'DESC'
-		) );
-
-		include METS_PLUGIN_PATH . 'public/templates/woocommerce/my-account-support-tickets.php';
+		// Use the existing ticket portal shortcode for consistency
+		echo '<div class="mets-woocommerce-portal-wrapper">';
+		echo do_shortcode( '[ticket_portal show_closed="no" per_page="10" allow_new_ticket="yes"]' );
+		echo '</div>';
 	}
 
 	/**

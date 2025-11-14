@@ -289,6 +289,10 @@ class METS_Core {
 		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_kb_articles', $plugin_public, 'ajax_search_kb_articles' );
 		$this->loader->add_action( 'wp_ajax_mets_submit_survey', $plugin_public, 'ajax_submit_survey' );
 		$this->loader->add_action( 'wp_ajax_nopriv_mets_submit_survey', $plugin_public, 'ajax_submit_survey' );
+
+		// Customer profile and preferences AJAX hooks
+		$this->loader->add_action( 'wp_ajax_mets_update_customer_profile', $plugin_public, 'ajax_update_customer_profile' );
+		$this->loader->add_action( 'wp_ajax_mets_update_notification_preferences', $plugin_public, 'ajax_update_notification_preferences' );
 	}
 
 	/**
