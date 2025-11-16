@@ -699,3 +699,203 @@ input[type="color"] {
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 }
+
+/* Modal Dialog Styles */
+.mets-modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.6);
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	animation: mets-modal-fade-in 0.2s ease;
+}
+
+@keyframes mets-modal-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.mets-modal-content {
+	background: #fff;
+	border-radius: 4px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	max-width: 600px;
+	width: 90%;
+	max-height: 90vh;
+	overflow-y: auto;
+	padding: 30px;
+	position: relative;
+	animation: mets-modal-slide-in 0.3s ease;
+}
+
+@keyframes mets-modal-slide-in {
+	from {
+		transform: translateY(-50px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+.mets-modal-content h3 {
+	margin: 0 0 15px 0;
+	font-size: 20px;
+	color: #1d2327;
+	border-bottom: 1px solid #ddd;
+	padding-bottom: 10px;
+}
+
+.mets-modal-content p {
+	margin: 0 0 20px 0;
+	color: #50575e;
+	line-height: 1.6;
+}
+
+.mets-modal-content form p {
+	margin-bottom: 20px;
+}
+
+.mets-modal-content label {
+	display: block;
+	margin-bottom: 8px;
+	color: #1d2327;
+	font-weight: 500;
+}
+
+.mets-modal-content input[type="number"],
+.mets-modal-content input[type="text"],
+.mets-modal-content textarea,
+.mets-modal-content select {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	font-size: 14px;
+	line-height: 1.5;
+	box-sizing: border-box;
+	transition: border-color 0.2s ease;
+}
+
+.mets-modal-content input[type="number"]:focus,
+.mets-modal-content input[type="text"]:focus,
+.mets-modal-content textarea:focus,
+.mets-modal-content select:focus {
+	border-color: #2271b1;
+	outline: none;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+.mets-modal-content textarea {
+	resize: vertical;
+	min-height: 80px;
+}
+
+.mets-modal-content .description {
+	font-size: 13px;
+	color: #646970;
+	font-style: italic;
+	margin-top: 5px;
+}
+
+.mets-modal-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 25px;
+	padding-top: 20px;
+	border-top: 1px solid #ddd;
+}
+
+.mets-modal-actions .button {
+	flex: 1;
+	text-align: center;
+	justify-content: center;
+}
+
+.mets-modal-message {
+	padding: 12px 15px;
+	border-radius: 4px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.mets-modal-message.success {
+	background: #d7f0dd;
+	border-left: 4px solid #00a32a;
+	color: #1e4620;
+}
+
+.mets-modal-message.error {
+	background: #f8d7da;
+	border-left: 4px solid #d63638;
+	color: #58181c;
+}
+
+/* Ticket Relationships Section */
+.mets-relationship-actions button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.mets-relationship-actions button .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.related-ticket-item {
+	transition: opacity 0.3s ease;
+}
+
+.related-ticket-item:hover {
+	background: #f5f5f5 !important;
+}
+
+.unlink-ticket {
+	padding: 4px 8px !important;
+	min-height: auto !important;
+	line-height: 1 !important;
+}
+
+.unlink-ticket:hover {
+	background: #d63638 !important;
+	border-color: #d63638 !important;
+	color: #fff !important;
+}
+
+.unlink-ticket .dashicons {
+	margin: 0 !important;
+}
+
+/* Responsive Modal */
+@media screen and (max-width: 782px) {
+	.mets-modal-content {
+		width: 95%;
+		padding: 20px;
+		max-height: 85vh;
+	}
+
+	.mets-modal-content h3 {
+		font-size: 18px;
+	}
+
+	.mets-modal-actions {
+		flex-direction: column;
+	}
+
+	.mets-modal-actions .button {
+		width: 100%;
+	}
+}

@@ -86,6 +86,12 @@ class METS_Admin {
 		add_action( 'wp_ajax_mets_warm_cache', array( $this, 'ajax_warm_cache' ) );
 		add_action( 'wp_ajax_mets_flush_all_cache', array( $this, 'ajax_flush_all_cache' ) );
 		add_action( 'wp_ajax_mets_flush_cache_group', array( $this, 'ajax_flush_cache_group' ) );
+
+		// Add ticket relationship AJAX handlers
+		add_action( 'wp_ajax_mets_merge_tickets', array( $this, 'ajax_merge_tickets' ) );
+		add_action( 'wp_ajax_mets_link_tickets', array( $this, 'ajax_link_tickets' ) );
+		add_action( 'wp_ajax_mets_mark_duplicate', array( $this, 'ajax_mark_duplicate' ) );
+		add_action( 'wp_ajax_mets_unlink_tickets', array( $this, 'ajax_unlink_tickets' ) );
 	}
 
 	/**
@@ -8943,6 +8949,252 @@ class METS_Admin {
 			wp_send_json_success( array( 'message' => __( 'Feedback sent to author successfully.', METS_TEXT_DOMAIN ) ) );
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to process request.', METS_TEXT_DOMAIN ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to merge tickets
+	 *
+	 * @since    1.0.0
+	 */
+	public function ajax_merge_tickets() {
+		// Verify nonce
+		check_ajax_referer( 'mets_ticket_relationships', 'nonce' );
+
+		// Check user capabilities
+		if ( ! current_user_can( 'mets_manager' ) && ! current_user_can( 'mets_admin' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to merge tickets.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Get parameters
+		$secondary_id = isset( $_POST['secondary_id'] ) ? intval( $_POST['secondary_id'] ) : 0;
+		$primary_id = isset( $_POST['primary_id'] ) ? intval( $_POST['primary_id'] ) : 0;
+		$notes = isset( $_POST['notes'] ) ? sanitize_textarea_field( $_POST['notes'] ) : '';
+
+		// Validate
+		if ( ! $secondary_id || ! $primary_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid ticket IDs provided.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		if ( $secondary_id === $primary_id ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot merge a ticket with itself.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Load models
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-relationship-model.php';
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+
+		$relationship_model = new METS_Ticket_Relationship_Model();
+		$ticket_model = new METS_Ticket_Model();
+
+		// Verify both tickets exist
+		$primary_ticket = $ticket_model->get( $primary_id );
+		$secondary_ticket = $ticket_model->get( $secondary_id );
+
+		if ( ! $primary_ticket || ! $secondary_ticket ) {
+			wp_send_json_error( array( 'message' => __( 'One or both tickets do not exist.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Perform merge
+		$result = $relationship_model->merge_tickets( $primary_id, $secondary_id, $notes );
+
+		if ( $result ) {
+			// Log the action
+			do_action( 'mets_ticket_merged', $primary_id, $secondary_id, get_current_user_id() );
+
+			wp_send_json_success( array(
+				'message' => sprintf(
+					__( 'Ticket %s successfully merged into %s.', METS_TEXT_DOMAIN ),
+					$secondary_ticket->ticket_number,
+					$primary_ticket->ticket_number
+				),
+				'primary_id' => $primary_id,
+			) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to merge tickets. Please try again.', METS_TEXT_DOMAIN ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to link related tickets
+	 *
+	 * @since    1.0.0
+	 */
+	public function ajax_link_tickets() {
+		// Verify nonce
+		check_ajax_referer( 'mets_ticket_relationships', 'nonce' );
+
+		// Check user capabilities
+		if ( ! current_user_can( 'mets_manager' ) && ! current_user_can( 'mets_admin' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to link tickets.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Get parameters
+		$ticket_id_1 = isset( $_POST['ticket_id_1'] ) ? intval( $_POST['ticket_id_1'] ) : 0;
+		$ticket_id_2 = isset( $_POST['ticket_id_2'] ) ? intval( $_POST['ticket_id_2'] ) : 0;
+		$notes = isset( $_POST['notes'] ) ? sanitize_textarea_field( $_POST['notes'] ) : '';
+
+		// Validate
+		if ( ! $ticket_id_1 || ! $ticket_id_2 ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid ticket IDs provided.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		if ( $ticket_id_1 === $ticket_id_2 ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot link a ticket to itself.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Load models
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-relationship-model.php';
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+
+		$relationship_model = new METS_Ticket_Relationship_Model();
+		$ticket_model = new METS_Ticket_Model();
+
+		// Verify both tickets exist
+		$ticket1 = $ticket_model->get( $ticket_id_1 );
+		$ticket2 = $ticket_model->get( $ticket_id_2 );
+
+		if ( ! $ticket1 || ! $ticket2 ) {
+			wp_send_json_error( array( 'message' => __( 'One or both tickets do not exist.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Check if already linked
+		$existing = $relationship_model->get_relationship( $ticket_id_1, $ticket_id_2 );
+		if ( $existing ) {
+			wp_send_json_error( array( 'message' => __( 'These tickets are already linked.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Create link
+		$result = $relationship_model->link_as_related( $ticket_id_1, $ticket_id_2, $notes );
+
+		if ( $result ) {
+			// Log the action
+			do_action( 'mets_tickets_linked', $ticket_id_1, $ticket_id_2, get_current_user_id() );
+
+			wp_send_json_success( array(
+				'message' => sprintf(
+					__( 'Tickets %s and %s successfully linked.', METS_TEXT_DOMAIN ),
+					$ticket1->ticket_number,
+					$ticket2->ticket_number
+				),
+			) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to link tickets. Please try again.', METS_TEXT_DOMAIN ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to mark ticket as duplicate
+	 *
+	 * @since    1.0.0
+	 */
+	public function ajax_mark_duplicate() {
+		// Verify nonce
+		check_ajax_referer( 'mets_ticket_relationships', 'nonce' );
+
+		// Check user capabilities
+		if ( ! current_user_can( 'mets_manager' ) && ! current_user_can( 'mets_admin' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to mark duplicates.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Get parameters
+		$duplicate_id = isset( $_POST['duplicate_id'] ) ? intval( $_POST['duplicate_id'] ) : 0;
+		$original_id = isset( $_POST['original_id'] ) ? intval( $_POST['original_id'] ) : 0;
+		$notes = isset( $_POST['notes'] ) ? sanitize_textarea_field( $_POST['notes'] ) : '';
+
+		// Validate
+		if ( ! $duplicate_id || ! $original_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid ticket IDs provided.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		if ( $duplicate_id === $original_id ) {
+			wp_send_json_error( array( 'message' => __( 'Cannot mark a ticket as duplicate of itself.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Load models
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-relationship-model.php';
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+
+		$relationship_model = new METS_Ticket_Relationship_Model();
+		$ticket_model = new METS_Ticket_Model();
+
+		// Verify both tickets exist
+		$duplicate_ticket = $ticket_model->get( $duplicate_id );
+		$original_ticket = $ticket_model->get( $original_id );
+
+		if ( ! $duplicate_ticket || ! $original_ticket ) {
+			wp_send_json_error( array( 'message' => __( 'One or both tickets do not exist.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Mark as duplicate
+		$result = $relationship_model->mark_as_duplicate( $duplicate_id, $original_id, $notes );
+
+		if ( $result ) {
+			// Log the action
+			do_action( 'mets_ticket_marked_duplicate', $duplicate_id, $original_id, get_current_user_id() );
+
+			wp_send_json_success( array(
+				'message' => sprintf(
+					__( 'Ticket %s marked as duplicate of %s.', METS_TEXT_DOMAIN ),
+					$duplicate_ticket->ticket_number,
+					$original_ticket->ticket_number
+				),
+			) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to mark ticket as duplicate. Please try again.', METS_TEXT_DOMAIN ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler to unlink tickets
+	 *
+	 * @since    1.0.0
+	 */
+	public function ajax_unlink_tickets() {
+		// Verify nonce
+		check_ajax_referer( 'mets_ticket_relationships', 'nonce' );
+
+		// Check user capabilities
+		if ( ! current_user_can( 'mets_manager' ) && ! current_user_can( 'mets_admin' ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to unlink tickets.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Get parameters
+		$relationship_id = isset( $_POST['relationship_id'] ) ? intval( $_POST['relationship_id'] ) : 0;
+
+		// Validate
+		if ( ! $relationship_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid relationship ID provided.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Load model
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-relationship-model.php';
+		$relationship_model = new METS_Ticket_Relationship_Model();
+
+		// Get relationship details before deleting
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'mets_ticket_relationships';
+		$relationship = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$table_name} WHERE id = %d",
+			$relationship_id
+		) );
+
+		if ( ! $relationship ) {
+			wp_send_json_error( array( 'message' => __( 'Relationship not found.', METS_TEXT_DOMAIN ) ) );
+		}
+
+		// Delete relationship
+		$result = $relationship_model->delete( $relationship_id );
+
+		if ( $result ) {
+			// Log the action
+			do_action( 'mets_tickets_unlinked', $relationship->parent_ticket_id, $relationship->child_ticket_id, get_current_user_id() );
+
+			wp_send_json_success( array(
+				'message' => __( 'Relationship removed successfully.', METS_TEXT_DOMAIN ),
+			) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to remove relationship. Please try again.', METS_TEXT_DOMAIN ) ) );
 		}
 	}
 

@@ -491,6 +491,40 @@ class METS_Ticket_Manager {
 									</div>
 								</div>
 							<?php endif; ?>
+
+							<?php if ( $is_edit && ( current_user_can( 'mets_manager' ) || current_user_can( 'mets_admin' ) ) ) : ?>
+								<div class="postbox">
+									<h3 class="hndle"><span><?php _e( 'Ticket Relationships', METS_TEXT_DOMAIN ); ?></span></h3>
+									<div class="inside">
+										<div id="mets-ticket-relationships">
+											<!-- Related Tickets Display -->
+											<div class="mets-related-tickets-section" style="margin-bottom: 15px;">
+												<p><strong><?php _e( 'Related Tickets:', METS_TEXT_DOMAIN ); ?></strong></p>
+												<div id="related-tickets-list">
+													<?php echo $this->render_related_tickets( $ticket->id ); ?>
+												</div>
+											</div>
+
+											<!-- Relationship Actions -->
+											<div class="mets-relationship-actions" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+												<p><strong><?php _e( 'Actions:', METS_TEXT_DOMAIN ); ?></strong></p>
+
+												<button type="button" class="button button-secondary" id="btn-merge-ticket" style="width: 100%; margin-bottom: 8px;">
+													<?php _e( 'Merge with Another Ticket', METS_TEXT_DOMAIN ); ?>
+												</button>
+
+												<button type="button" class="button button-secondary" id="btn-link-ticket" style="width: 100%; margin-bottom: 8px;">
+													<?php _e( 'Link Related Ticket', METS_TEXT_DOMAIN ); ?>
+												</button>
+
+												<button type="button" class="button button-secondary" id="btn-mark-duplicate" style="width: 100%; margin-bottom: 8px;">
+													<?php _e( 'Mark as Duplicate', METS_TEXT_DOMAIN ); ?>
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							<?php endif; ?>
 						<?php endif; ?>
 					</div>
 				</div>
@@ -1005,6 +1039,313 @@ class METS_Ticket_Manager {
 			
 			// Re-initialize if needed (in case of dynamic loading)
 			setTimeout(initializeTextareas, 100);
+
+			// Ticket Relationships Functionality
+			<?php if ( $is_edit && ( current_user_can( 'mets_manager' ) || current_user_can( 'mets_admin' ) ) ) : ?>
+				// Merge Ticket Modal
+				$('#btn-merge-ticket').on('click', function() {
+					var ticketId = <?php echo $ticket->id; ?>;
+					var ticketNumber = '<?php echo esc_js( $ticket->ticket_number ); ?>';
+
+					var modal = $('<div class="mets-modal-overlay"></div>');
+					var modalContent = $('<div class="mets-modal-content"></div>');
+
+					modalContent.html(`
+						<h3><?php _e( 'Merge Ticket', METS_TEXT_DOMAIN ); ?></h3>
+						<p><?php _e( 'Merge this ticket into another ticket. All replies and attachments will be moved.', METS_TEXT_DOMAIN ); ?></p>
+						<form id="merge-ticket-form">
+							<p>
+								<label><strong><?php _e( 'Merge Into Ticket ID:', METS_TEXT_DOMAIN ); ?></strong></label><br>
+								<input type="number" id="merge-primary-id" class="regular-text" required min="1" placeholder="<?php esc_attr_e( 'Enter ticket ID', METS_TEXT_DOMAIN ); ?>">
+								<p class="description"><?php _e( 'The ticket that will receive all data from the current ticket.', METS_TEXT_DOMAIN ); ?></p>
+							</p>
+							<p>
+								<label><strong><?php _e( 'Notes (Optional):', METS_TEXT_DOMAIN ); ?></strong></label><br>
+								<textarea id="merge-notes" class="large-text" rows="3" placeholder="<?php esc_attr_e( 'Add any notes about this merge...', METS_TEXT_DOMAIN ); ?>"></textarea>
+							</p>
+							<div class="mets-modal-actions">
+								<button type="submit" class="button button-primary"><?php _e( 'Merge Tickets', METS_TEXT_DOMAIN ); ?></button>
+								<button type="button" class="button button-secondary mets-modal-close"><?php _e( 'Cancel', METS_TEXT_DOMAIN ); ?></button>
+							</div>
+							<div class="mets-modal-message" style="display: none; margin-top: 15px;"></div>
+						</form>
+					`);
+
+					modal.append(modalContent);
+					$('body').append(modal);
+					modal.fadeIn(200);
+
+					// Close modal
+					modal.find('.mets-modal-close').on('click', function() {
+						modal.fadeOut(200, function() { modal.remove(); });
+					});
+
+					modal.on('click', function(e) {
+						if ($(e.target).hasClass('mets-modal-overlay')) {
+							modal.fadeOut(200, function() { modal.remove(); });
+						}
+					});
+
+					// Handle form submission
+					$('#merge-ticket-form').on('submit', function(e) {
+						e.preventDefault();
+
+						var primaryId = $('#merge-primary-id').val();
+						var notes = $('#merge-notes').val();
+
+						if (!primaryId) {
+							alert('<?php esc_js_e( 'Please enter a ticket ID', METS_TEXT_DOMAIN ); ?>');
+							return;
+						}
+
+						// Show loading
+						modalContent.find('.mets-modal-message').html('<p><?php _e( 'Merging tickets...', METS_TEXT_DOMAIN ); ?></p>').show();
+						modalContent.find('button[type="submit"]').prop('disabled', true);
+
+						$.ajax({
+							url: ajaxurl,
+							type: 'POST',
+							data: {
+								action: 'mets_merge_tickets',
+								nonce: '<?php echo wp_create_nonce( 'mets_ticket_relationships' ); ?>',
+								secondary_id: ticketId,
+								primary_id: primaryId,
+								notes: notes
+							},
+							success: function(response) {
+								if (response.success) {
+									modalContent.find('.mets-modal-message').html('<p style="color: green;">' + response.data.message + '</p>');
+									setTimeout(function() {
+										window.location.href = '<?php echo admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' ); ?>' + primaryId;
+									}, 1500);
+								} else {
+									modalContent.find('.mets-modal-message').html('<p style="color: red;">' + response.data.message + '</p>');
+									modalContent.find('button[type="submit"]').prop('disabled', false);
+								}
+							},
+							error: function() {
+								modalContent.find('.mets-modal-message').html('<p style="color: red;"><?php _e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?></p>');
+								modalContent.find('button[type="submit"]').prop('disabled', false);
+							}
+						});
+					});
+				});
+
+				// Link Related Ticket Modal
+				$('#btn-link-ticket').on('click', function() {
+					var ticketId = <?php echo $ticket->id; ?>;
+
+					var modal = $('<div class="mets-modal-overlay"></div>');
+					var modalContent = $('<div class="mets-modal-content"></div>');
+
+					modalContent.html(`
+						<h3><?php _e( 'Link Related Ticket', METS_TEXT_DOMAIN ); ?></h3>
+						<p><?php _e( 'Link another ticket as related to this one.', METS_TEXT_DOMAIN ); ?></p>
+						<form id="link-ticket-form">
+							<p>
+								<label><strong><?php _e( 'Related Ticket ID:', METS_TEXT_DOMAIN ); ?></strong></label><br>
+								<input type="number" id="link-ticket-id" class="regular-text" required min="1" placeholder="<?php esc_attr_e( 'Enter ticket ID', METS_TEXT_DOMAIN ); ?>">
+								<p class="description"><?php _e( 'The ticket you want to link as related.', METS_TEXT_DOMAIN ); ?></p>
+							</p>
+							<p>
+								<label><strong><?php _e( 'Notes (Optional):', METS_TEXT_DOMAIN ); ?></strong></label><br>
+								<textarea id="link-notes" class="large-text" rows="3" placeholder="<?php esc_attr_e( 'Add any notes about this relationship...', METS_TEXT_DOMAIN ); ?>"></textarea>
+							</p>
+							<div class="mets-modal-actions">
+								<button type="submit" class="button button-primary"><?php _e( 'Link Tickets', METS_TEXT_DOMAIN ); ?></button>
+								<button type="button" class="button button-secondary mets-modal-close"><?php _e( 'Cancel', METS_TEXT_DOMAIN ); ?></button>
+							</div>
+							<div class="mets-modal-message" style="display: none; margin-top: 15px;"></div>
+						</form>
+					`);
+
+					modal.append(modalContent);
+					$('body').append(modal);
+					modal.fadeIn(200);
+
+					// Close modal
+					modal.find('.mets-modal-close').on('click', function() {
+						modal.fadeOut(200, function() { modal.remove(); });
+					});
+
+					modal.on('click', function(e) {
+						if ($(e.target).hasClass('mets-modal-overlay')) {
+							modal.fadeOut(200, function() { modal.remove(); });
+						}
+					});
+
+					// Handle form submission
+					$('#link-ticket-form').on('submit', function(e) {
+						e.preventDefault();
+
+						var relatedId = $('#link-ticket-id').val();
+						var notes = $('#link-notes').val();
+
+						if (!relatedId) {
+							alert('<?php esc_js_e( 'Please enter a ticket ID', METS_TEXT_DOMAIN ); ?>');
+							return;
+						}
+
+						// Show loading
+						modalContent.find('.mets-modal-message').html('<p><?php _e( 'Linking tickets...', METS_TEXT_DOMAIN ); ?></p>').show();
+						modalContent.find('button[type="submit"]').prop('disabled', true);
+
+						$.ajax({
+							url: ajaxurl,
+							type: 'POST',
+							data: {
+								action: 'mets_link_tickets',
+								nonce: '<?php echo wp_create_nonce( 'mets_ticket_relationships' ); ?>',
+								ticket_id_1: ticketId,
+								ticket_id_2: relatedId,
+								notes: notes
+							},
+							success: function(response) {
+								if (response.success) {
+									modalContent.find('.mets-modal-message').html('<p style="color: green;">' + response.data.message + '</p>');
+									setTimeout(function() {
+										location.reload();
+									}, 1500);
+								} else {
+									modalContent.find('.mets-modal-message').html('<p style="color: red;">' + response.data.message + '</p>');
+									modalContent.find('button[type="submit"]').prop('disabled', false);
+								}
+							},
+							error: function() {
+								modalContent.find('.mets-modal-message').html('<p style="color: red;"><?php _e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?></p>');
+								modalContent.find('button[type="submit"]').prop('disabled', false);
+							}
+						});
+					});
+				});
+
+				// Mark as Duplicate Modal
+				$('#btn-mark-duplicate').on('click', function() {
+					var ticketId = <?php echo $ticket->id; ?>;
+
+					var modal = $('<div class="mets-modal-overlay"></div>');
+					var modalContent = $('<div class="mets-modal-content"></div>');
+
+					modalContent.html(`
+						<h3><?php _e( 'Mark as Duplicate', METS_TEXT_DOMAIN ); ?></h3>
+						<p><?php _e( 'Mark this ticket as a duplicate of another ticket.', METS_TEXT_DOMAIN ); ?></p>
+						<form id="duplicate-ticket-form">
+							<p>
+								<label><strong><?php _e( 'Original Ticket ID:', METS_TEXT_DOMAIN ); ?></strong></label><br>
+								<input type="number" id="duplicate-original-id" class="regular-text" required min="1" placeholder="<?php esc_attr_e( 'Enter original ticket ID', METS_TEXT_DOMAIN ); ?>">
+								<p class="description"><?php _e( 'The original ticket that this one duplicates.', METS_TEXT_DOMAIN ); ?></p>
+							</p>
+							<p>
+								<label><strong><?php _e( 'Notes (Optional):', METS_TEXT_DOMAIN ); ?></strong></label><br>
+								<textarea id="duplicate-notes" class="large-text" rows="3" placeholder="<?php esc_attr_e( 'Add any notes about why this is a duplicate...', METS_TEXT_DOMAIN ); ?>"></textarea>
+							</p>
+							<div class="mets-modal-actions">
+								<button type="submit" class="button button-primary"><?php _e( 'Mark as Duplicate', METS_TEXT_DOMAIN ); ?></button>
+								<button type="button" class="button button-secondary mets-modal-close"><?php _e( 'Cancel', METS_TEXT_DOMAIN ); ?></button>
+							</div>
+							<div class="mets-modal-message" style="display: none; margin-top: 15px;"></div>
+						</form>
+					`);
+
+					modal.append(modalContent);
+					$('body').append(modal);
+					modal.fadeIn(200);
+
+					// Close modal
+					modal.find('.mets-modal-close').on('click', function() {
+						modal.fadeOut(200, function() { modal.remove(); });
+					});
+
+					modal.on('click', function(e) {
+						if ($(e.target).hasClass('mets-modal-overlay')) {
+							modal.fadeOut(200, function() { modal.remove(); });
+						}
+					});
+
+					// Handle form submission
+					$('#duplicate-ticket-form').on('submit', function(e) {
+						e.preventDefault();
+
+						var originalId = $('#duplicate-original-id').val();
+						var notes = $('#duplicate-notes').val();
+
+						if (!originalId) {
+							alert('<?php esc_js_e( 'Please enter a ticket ID', METS_TEXT_DOMAIN ); ?>');
+							return;
+						}
+
+						// Show loading
+						modalContent.find('.mets-modal-message').html('<p><?php _e( 'Marking as duplicate...', METS_TEXT_DOMAIN ); ?></p>').show();
+						modalContent.find('button[type="submit"]').prop('disabled', true);
+
+						$.ajax({
+							url: ajaxurl,
+							type: 'POST',
+							data: {
+								action: 'mets_mark_duplicate',
+								nonce: '<?php echo wp_create_nonce( 'mets_ticket_relationships' ); ?>',
+								duplicate_id: ticketId,
+								original_id: originalId,
+								notes: notes
+							},
+							success: function(response) {
+								if (response.success) {
+									modalContent.find('.mets-modal-message').html('<p style="color: green;">' + response.data.message + '</p>');
+									setTimeout(function() {
+										location.reload();
+									}, 1500);
+								} else {
+									modalContent.find('.mets-modal-message').html('<p style="color: red;">' + response.data.message + '</p>');
+									modalContent.find('button[type="submit"]').prop('disabled', false);
+								}
+							},
+							error: function() {
+								modalContent.find('.mets-modal-message').html('<p style="color: red;"><?php _e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?></p>');
+								modalContent.find('button[type="submit"]').prop('disabled', false);
+							}
+						});
+					});
+				});
+
+				// Unlink ticket relationship
+				$(document).on('click', '.unlink-ticket', function() {
+					if (!confirm('<?php esc_js_e( 'Are you sure you want to remove this relationship?', METS_TEXT_DOMAIN ); ?>')) {
+						return;
+					}
+
+					var button = $(this);
+					var relationshipId = button.data('relationship-id');
+
+					button.prop('disabled', true).text('<?php esc_js_e( 'Removing...', METS_TEXT_DOMAIN ); ?>');
+
+					$.ajax({
+						url: ajaxurl,
+						type: 'POST',
+						data: {
+							action: 'mets_unlink_tickets',
+							nonce: '<?php echo wp_create_nonce( 'mets_ticket_relationships' ); ?>',
+							relationship_id: relationshipId
+						},
+						success: function(response) {
+							if (response.success) {
+								button.closest('.related-ticket-item').fadeOut(300, function() {
+									$(this).remove();
+									if ($('.related-ticket-item').length === 0) {
+										$('#related-tickets-list').html('<p class="description"><?php esc_js_e( 'No related tickets found.', METS_TEXT_DOMAIN ); ?></p>');
+									}
+								});
+							} else {
+								alert(response.data.message);
+								button.prop('disabled', false).html('<span class="dashicons dashicons-no-alt" style="font-size: 12px; line-height: 1.2;"></span>');
+							}
+						},
+						error: function() {
+							alert('<?php esc_js_e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?>');
+							button.prop('disabled', false).html('<span class="dashicons dashicons-no-alt" style="font-size: 12px; line-height: 1.2;"></span>');
+						}
+					});
+				});
+			<?php endif; ?>
 		});
 		</script>
 		
@@ -1387,6 +1728,96 @@ class METS_Ticket_Manager {
 	 * @param    int    $ticket_id    Ticket ID
 	 * @return   string               HTML output
 	 */
+	/**
+	 * Render related tickets
+	 *
+	 * @since    1.0.1
+	 * @param    int    $ticket_id    Ticket ID
+	 * @return   string                HTML output
+	 */
+	private function render_related_tickets( $ticket_id ) {
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-relationship-model.php';
+		$relationship_model = new METS_Ticket_Relationship_Model();
+
+		$relationships = $relationship_model->get_related_tickets( $ticket_id );
+
+		if ( empty( $relationships ) ) {
+			return '<p class="description">' . __( 'No related tickets found.', METS_TEXT_DOMAIN ) . '</p>';
+		}
+
+		ob_start();
+		?>
+		<div class="related-tickets-list">
+			<?php foreach ( $relationships as $rel ) : ?>
+				<?php
+				// Determine which ticket is the "other" one
+				$other_ticket_id = ( $rel->parent_ticket_id == $ticket_id ) ? $rel->child_ticket_id : $rel->parent_ticket_id;
+
+				// Get the other ticket details
+				require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+				$ticket_model = new METS_Ticket_Model();
+				$other_ticket = $ticket_model->get( $other_ticket_id );
+
+				if ( ! $other_ticket ) {
+					continue;
+				}
+
+				// Get relationship type label
+				$type_labels = array(
+					'merged' => __( 'Merged', METS_TEXT_DOMAIN ),
+					'split' => __( 'Split', METS_TEXT_DOMAIN ),
+					'related' => __( 'Related', METS_TEXT_DOMAIN ),
+					'duplicate' => __( 'Duplicate', METS_TEXT_DOMAIN ),
+				);
+				$type_label = isset( $type_labels[ $rel->relationship_type ] ) ? $type_labels[ $rel->relationship_type ] : ucfirst( $rel->relationship_type );
+
+				// Get status info
+				$statuses = get_option( 'mets_ticket_statuses', array() );
+				$status_label = isset( $statuses[ $other_ticket->status ] ) ? $statuses[ $other_ticket->status ]['label'] : ucfirst( $other_ticket->status );
+				$status_color = isset( $statuses[ $other_ticket->status ] ) ? $statuses[ $other_ticket->status ]['color'] : '#666';
+				?>
+				<div class="related-ticket-item" style="margin-bottom: 12px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+					<div class="ticket-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+						<div class="ticket-info" style="flex: 1;">
+							<h5 style="margin: 0 0 4px 0; font-size: 14px;">
+								<a href="<?php echo admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $other_ticket_id ); ?>" target="_blank" style="text-decoration: none;">
+									<?php echo esc_html( $other_ticket->ticket_number ); ?> - <?php echo esc_html( $other_ticket->subject ); ?>
+								</a>
+							</h5>
+							<div class="relationship-meta" style="font-size: 12px; color: #666;">
+								<span class="relationship-type" style="display: inline-block; padding: 2px 6px; background: #007cba; color: white; border-radius: 3px; margin-right: 8px;">
+									<?php echo esc_html( $type_label ); ?>
+								</span>
+								<span class="ticket-status" style="display: inline-block; padding: 2px 6px; background-color: <?php echo esc_attr( $status_color ); ?>15; color: <?php echo esc_attr( $status_color ); ?>; border-radius: 3px; margin-right: 8px;">
+									<?php echo esc_html( $status_label ); ?>
+								</span>
+								<span class="created-date"><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $rel->created_at ) ) ); ?></span>
+							</div>
+						</div>
+						<div class="ticket-actions">
+							<button type="button" class="button button-small unlink-ticket" data-relationship-id="<?php echo esc_attr( $rel->id ); ?>" title="<?php esc_attr_e( 'Remove relationship', METS_TEXT_DOMAIN ); ?>">
+								<span class="dashicons dashicons-no-alt" style="font-size: 12px; line-height: 1.2;"></span>
+							</button>
+						</div>
+					</div>
+
+					<?php if ( $rel->notes ) : ?>
+						<div class="relationship-notes" style="background: #fff; padding: 8px; border-left: 3px solid #007cba; font-size: 12px; color: #555;">
+							<strong><?php _e( 'Notes:', METS_TEXT_DOMAIN ); ?></strong> <?php echo esc_html( $rel->notes ); ?>
+						</div>
+					<?php endif; ?>
+
+					<div class="ticket-details" style="margin-top: 8px; font-size: 12px; color: #666;">
+						<strong><?php _e( 'Entity:', METS_TEXT_DOMAIN ); ?></strong> <?php echo esc_html( $other_ticket->entity_name ); ?> |
+						<strong><?php _e( 'Customer:', METS_TEXT_DOMAIN ); ?></strong> <?php echo esc_html( $other_ticket->customer_name ); ?>
+					</div>
+				</div>
+			<?php endforeach; ?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
 	private function render_linked_articles( $ticket_id ) {
 		$linked_articles = $this->kb_link_model->get_by_ticket( $ticket_id );
 
