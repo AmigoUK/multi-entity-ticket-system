@@ -465,11 +465,11 @@ class METS_Ticket_Manager {
 											
 											<div class="mets-kb-quick-actions" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
 												<p><strong><?php _e( 'Quick Actions:', METS_TEXT_DOMAIN ); ?></strong></p>
-												<a href="<?php echo admin_url( 'admin.php?page=mets-kb-add-article' ); ?>" class="button button-secondary" target="_blank">
+												<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-kb-add-article' ) ); ?>" class="button button-secondary" target="_blank">
 													<?php _e( 'Create New Article', METS_TEXT_DOMAIN ); ?>
 												</a>
 												<br><br>
-												<a href="<?php echo admin_url( 'admin.php?page=mets-kb-articles' ); ?>" class="button button-secondary" target="_blank">
+												<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-kb-articles' ) ); ?>" class="button button-secondary" target="_blank">
 													<?php _e( 'Browse All Articles', METS_TEXT_DOMAIN ); ?>
 												</a>
 											</div>
@@ -1099,7 +1099,10 @@ class METS_Ticket_Manager {
 						}
 
 						// Show loading
-						modalContent.find('.mets-modal-message').html('<p><?php _e( 'Merging tickets...', METS_TEXT_DOMAIN ); ?></p>').show();
+						modalContent.find('.mets-modal-message')
+							.removeClass('success error')
+							.text('<?php esc_js_e( 'Merging tickets...', METS_TEXT_DOMAIN ); ?>')
+							.show();
 						modalContent.find('button[type="submit"]').prop('disabled', true);
 
 						$.ajax({
@@ -1114,18 +1117,44 @@ class METS_Ticket_Manager {
 							},
 							success: function(response) {
 								if (response.success) {
-									modalContent.find('.mets-modal-message').html('<p style="color: green;">' + response.data.message + '</p>');
+									modalContent.find('.mets-modal-message')
+										.removeClass('error')
+										.addClass('success')
+										.text(response.data.message)
+										.show();
 									setTimeout(function() {
-										window.location.href = '<?php echo admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' ); ?>' + primaryId;
+										window.location.href = '<?php echo esc_url( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' ) ); ?>' + primaryId;
 									}, 1500);
 								} else {
-									modalContent.find('.mets-modal-message').html('<p style="color: red;">' + response.data.message + '</p>');
+									modalContent.find('.mets-modal-message')
+										.removeClass('success')
+										.addClass('error')
+										.text(response.data.message)
+										.show();
 									modalContent.find('button[type="submit"]').prop('disabled', false);
 								}
 							},
-							error: function() {
-								modalContent.find('.mets-modal-message').html('<p style="color: red;"><?php _e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?></p>');
+							error: function(xhr, status, error) {
+								var errorMessage = '<?php esc_js_e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?>';
+
+								if (xhr.status === 0) {
+									errorMessage = '<?php esc_js_e( 'Network error. Please check your connection.', METS_TEXT_DOMAIN ); ?>';
+								} else if (xhr.status === 403) {
+									errorMessage = '<?php esc_js_e( 'Permission denied. Please refresh the page.', METS_TEXT_DOMAIN ); ?>';
+								} else if (xhr.status === 500) {
+									errorMessage = '<?php esc_js_e( 'Server error. Please contact support.', METS_TEXT_DOMAIN ); ?>';
+								}
+
+								modalContent.find('.mets-modal-message')
+									.removeClass('success')
+									.addClass('error')
+									.text(errorMessage)
+									.show();
 								modalContent.find('button[type="submit"]').prop('disabled', false);
+
+								if (console && console.error) {
+									console.error('METS Merge Error:', status, error, xhr.responseText);
+								}
 							}
 						});
 					});
@@ -1187,7 +1216,10 @@ class METS_Ticket_Manager {
 						}
 
 						// Show loading
-						modalContent.find('.mets-modal-message').html('<p><?php _e( 'Linking tickets...', METS_TEXT_DOMAIN ); ?></p>').show();
+						modalContent.find('.mets-modal-message')
+							.removeClass('success error')
+							.text('<?php esc_js_e( 'Linking tickets...', METS_TEXT_DOMAIN ); ?>')
+							.show();
 						modalContent.find('button[type="submit"]').prop('disabled', true);
 
 						$.ajax({
@@ -1202,18 +1234,44 @@ class METS_Ticket_Manager {
 							},
 							success: function(response) {
 								if (response.success) {
-									modalContent.find('.mets-modal-message').html('<p style="color: green;">' + response.data.message + '</p>');
+									modalContent.find('.mets-modal-message')
+										.removeClass('error')
+										.addClass('success')
+										.text(response.data.message)
+										.show();
 									setTimeout(function() {
 										location.reload();
 									}, 1500);
 								} else {
-									modalContent.find('.mets-modal-message').html('<p style="color: red;">' + response.data.message + '</p>');
+									modalContent.find('.mets-modal-message')
+										.removeClass('success')
+										.addClass('error')
+										.text(response.data.message)
+										.show();
 									modalContent.find('button[type="submit"]').prop('disabled', false);
 								}
 							},
-							error: function() {
-								modalContent.find('.mets-modal-message').html('<p style="color: red;"><?php _e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?></p>');
+							error: function(xhr, status, error) {
+								var errorMessage = '<?php esc_js_e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?>';
+
+								if (xhr.status === 0) {
+									errorMessage = '<?php esc_js_e( 'Network error. Please check your connection.', METS_TEXT_DOMAIN ); ?>';
+								} else if (xhr.status === 403) {
+									errorMessage = '<?php esc_js_e( 'Permission denied. Please refresh the page.', METS_TEXT_DOMAIN ); ?>';
+								} else if (xhr.status === 500) {
+									errorMessage = '<?php esc_js_e( 'Server error. Please contact support.', METS_TEXT_DOMAIN ); ?>';
+								}
+
+								modalContent.find('.mets-modal-message')
+									.removeClass('success')
+									.addClass('error')
+									.text(errorMessage)
+									.show();
 								modalContent.find('button[type="submit"]').prop('disabled', false);
+
+								if (console && console.error) {
+									console.error('METS Link Error:', status, error, xhr.responseText);
+								}
 							}
 						});
 					});
@@ -1275,7 +1333,10 @@ class METS_Ticket_Manager {
 						}
 
 						// Show loading
-						modalContent.find('.mets-modal-message').html('<p><?php _e( 'Marking as duplicate...', METS_TEXT_DOMAIN ); ?></p>').show();
+						modalContent.find('.mets-modal-message')
+							.removeClass('success error')
+							.text('<?php esc_js_e( 'Marking as duplicate...', METS_TEXT_DOMAIN ); ?>')
+							.show();
 						modalContent.find('button[type="submit"]').prop('disabled', true);
 
 						$.ajax({
@@ -1290,18 +1351,44 @@ class METS_Ticket_Manager {
 							},
 							success: function(response) {
 								if (response.success) {
-									modalContent.find('.mets-modal-message').html('<p style="color: green;">' + response.data.message + '</p>');
+									modalContent.find('.mets-modal-message')
+										.removeClass('error')
+										.addClass('success')
+										.text(response.data.message)
+										.show();
 									setTimeout(function() {
 										location.reload();
 									}, 1500);
 								} else {
-									modalContent.find('.mets-modal-message').html('<p style="color: red;">' + response.data.message + '</p>');
+									modalContent.find('.mets-modal-message')
+										.removeClass('success')
+										.addClass('error')
+										.text(response.data.message)
+										.show();
 									modalContent.find('button[type="submit"]').prop('disabled', false);
 								}
 							},
-							error: function() {
-								modalContent.find('.mets-modal-message').html('<p style="color: red;"><?php _e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?></p>');
+							error: function(xhr, status, error) {
+								var errorMessage = '<?php esc_js_e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?>';
+
+								if (xhr.status === 0) {
+									errorMessage = '<?php esc_js_e( 'Network error. Please check your connection.', METS_TEXT_DOMAIN ); ?>';
+								} else if (xhr.status === 403) {
+									errorMessage = '<?php esc_js_e( 'Permission denied. Please refresh the page.', METS_TEXT_DOMAIN ); ?>';
+								} else if (xhr.status === 500) {
+									errorMessage = '<?php esc_js_e( 'Server error. Please contact support.', METS_TEXT_DOMAIN ); ?>';
+								}
+
+								modalContent.find('.mets-modal-message')
+									.removeClass('success')
+									.addClass('error')
+									.text(errorMessage)
+									.show();
 								modalContent.find('button[type="submit"]').prop('disabled', false);
+
+								if (console && console.error) {
+									console.error('METS Duplicate Error:', status, error, xhr.responseText);
+								}
 							}
 						});
 					});
@@ -1331,17 +1418,30 @@ class METS_Ticket_Manager {
 								button.closest('.related-ticket-item').fadeOut(300, function() {
 									$(this).remove();
 									if ($('.related-ticket-item').length === 0) {
-										$('#related-tickets-list').html('<p class="description"><?php esc_js_e( 'No related tickets found.', METS_TEXT_DOMAIN ); ?></p>');
+										var emptyMessage = $('<p>').addClass('description').text('<?php esc_js_e( 'No related tickets found.', METS_TEXT_DOMAIN ); ?>');
+										$('#related-tickets-list').empty().append(emptyMessage);
 									}
 								});
 							} else {
-								alert(response.data.message);
+								alert(response.data && response.data.message ? response.data.message : '<?php esc_js_e( 'Failed to remove relationship.', METS_TEXT_DOMAIN ); ?>');
 								button.prop('disabled', false).html('<span class="dashicons dashicons-no-alt" style="font-size: 12px; line-height: 1.2;"></span>');
 							}
 						},
-						error: function() {
-							alert('<?php esc_js_e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?>');
+						error: function(xhr, status, error) {
+							var errorMessage = '<?php esc_js_e( 'An error occurred. Please try again.', METS_TEXT_DOMAIN ); ?>';
+
+							if (xhr.status === 0) {
+								errorMessage = '<?php esc_js_e( 'Network error. Please check your connection.', METS_TEXT_DOMAIN ); ?>';
+							} else if (xhr.status === 403) {
+								errorMessage = '<?php esc_js_e( 'Permission denied. Please refresh the page.', METS_TEXT_DOMAIN ); ?>';
+							}
+
+							alert(errorMessage);
 							button.prop('disabled', false).html('<span class="dashicons dashicons-no-alt" style="font-size: 12px; line-height: 1.2;"></span>');
+
+							if (console && console.error) {
+								console.error('METS Unlink Error:', status, error, xhr.responseText);
+							}
 						}
 					});
 				});
@@ -1737,7 +1837,10 @@ class METS_Ticket_Manager {
 	 */
 	private function render_related_tickets( $ticket_id ) {
 		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-relationship-model.php';
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+
 		$relationship_model = new METS_Ticket_Relationship_Model();
+		$ticket_model = new METS_Ticket_Model();
 
 		$relationships = $relationship_model->get_related_tickets( $ticket_id );
 
@@ -1754,8 +1857,6 @@ class METS_Ticket_Manager {
 				$other_ticket_id = ( $rel->parent_ticket_id == $ticket_id ) ? $rel->child_ticket_id : $rel->parent_ticket_id;
 
 				// Get the other ticket details
-				require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
-				$ticket_model = new METS_Ticket_Model();
 				$other_ticket = $ticket_model->get( $other_ticket_id );
 
 				if ( ! $other_ticket ) {
@@ -1780,7 +1881,7 @@ class METS_Ticket_Manager {
 					<div class="ticket-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
 						<div class="ticket-info" style="flex: 1;">
 							<h5 style="margin: 0 0 4px 0; font-size: 14px;">
-								<a href="<?php echo admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $other_ticket_id ); ?>" target="_blank" style="text-decoration: none;">
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $other_ticket_id ) ); ?>" target="_blank" style="text-decoration: none;">
 									<?php echo esc_html( $other_ticket->ticket_number ); ?> - <?php echo esc_html( $other_ticket->subject ); ?>
 								</a>
 							</h5>
@@ -1833,7 +1934,7 @@ class METS_Ticket_Manager {
 					<div class="article-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
 						<div class="article-info" style="flex: 1;">
 							<h5 style="margin: 0 0 4px 0; font-size: 14px;">
-								<a href="<?php echo admin_url( 'admin.php?page=mets-kb-article&id=' . $link->article_id ); ?>" target="_blank" style="text-decoration: none;">
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-kb-article&id=' . $link->article_id ) ); ?>" target="_blank" style="text-decoration: none;">
 									<?php echo esc_html( $link->article_title ); ?>
 								</a>
 							</h5>

@@ -140,6 +140,22 @@ class METS_Ticket_Relationship_Model {
 	}
 
 	/**
+	 * Get a relationship by ID
+	 *
+	 * @since    1.0.1
+	 * @param    int    $relationship_id    Relationship ID
+	 * @return   object|null                Relationship object or null if not found
+	 */
+	public function get( $relationship_id ) {
+		global $wpdb;
+
+		return $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$this->table_name} WHERE id = %d",
+			$relationship_id
+		) );
+	}
+
+	/**
 	 * Delete a relationship
 	 *
 	 * @since    1.0.1

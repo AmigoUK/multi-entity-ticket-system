@@ -9172,12 +9172,7 @@ class METS_Admin {
 		$relationship_model = new METS_Ticket_Relationship_Model();
 
 		// Get relationship details before deleting
-		global $wpdb;
-		$table_name = $wpdb->prefix . 'mets_ticket_relationships';
-		$relationship = $wpdb->get_row( $wpdb->prepare(
-			"SELECT * FROM {$table_name} WHERE id = %d",
-			$relationship_id
-		) );
+		$relationship = $relationship_model->get( $relationship_id );
 
 		if ( ! $relationship ) {
 			wp_send_json_error( array( 'message' => __( 'Relationship not found.', METS_TEXT_DOMAIN ) ) );
