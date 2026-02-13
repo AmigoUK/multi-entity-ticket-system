@@ -787,7 +787,7 @@ class METS_Admin {
 			);
 			
 			// Validate workflow rules for status changes
-			if ( $current_ticket && $current_ticket->status != $data['status'] ) {
+			if ( $current_ticket && $current_ticket->status !== $data['status'] ) {
 				require_once METS_PLUGIN_PATH . 'includes/models/class-mets-workflow-model.php';
 				$workflow_model = new METS_Workflow_Model();
 				
@@ -812,7 +812,7 @@ class METS_Admin {
 			
 			// Track changes for logging
 			if ( $current_ticket ) {
-				if ( $current_ticket->status != $data['status'] ) {
+				if ( $current_ticket->status !== $data['status'] ) {
 					// Get status display names
 					$statuses = get_option( 'mets_ticket_statuses', array() );
 					$old_status_label = isset( $statuses[$current_ticket->status] ) ? $statuses[$current_ticket->status]['label'] : ucfirst( $current_ticket->status );
@@ -826,7 +826,7 @@ class METS_Admin {
 					
 					$changes[] = $status_change;
 				}
-				if ( $current_ticket->priority != $data['priority'] ) {
+				if ( $current_ticket->priority !== $data['priority'] ) {
 					// Get priority display names
 					$priorities = get_option( 'mets_ticket_priorities', array() );
 					$old_priority_label = isset( $priorities[$current_ticket->priority] ) ? $priorities[$current_ticket->priority]['label'] : ucfirst( $current_ticket->priority );
@@ -834,7 +834,7 @@ class METS_Admin {
 					
 					$changes[] = sprintf( __( 'Priority changed from "%s" to "%s"', METS_TEXT_DOMAIN ), $old_priority_label, $new_priority_label );
 				}
-				if ( $current_ticket->category != $data['category'] ) {
+				if ( $current_ticket->category !== $data['category'] ) {
 					// Get category display names
 					$categories = get_option( 'mets_ticket_categories', array() );
 					$old_cat = $current_ticket->category && isset( $categories[$current_ticket->category] ) ? $categories[$current_ticket->category] : ( $current_ticket->category ?: __( 'None', METS_TEXT_DOMAIN ) );
