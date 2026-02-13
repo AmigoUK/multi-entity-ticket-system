@@ -432,32 +432,20 @@ class METS_Admin {
 		register_setting( 'mets_settings', 'mets_smtp_settings' );
 		register_setting( 'mets_settings', 'mets_n8n_chat_settings' );
 		
-		// Debug admin_init
-		if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
-			error_log( '[METS] admin_init: POST request detected' );
-			error_log( '[METS] GET page: ' . ( $_GET['page'] ?? 'not set' ) );
-			error_log( '[METS] POST page: ' . ( $_POST['page'] ?? 'not set' ) );
-		}
-		
 		// Handle form submissions early
 		if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 			// Check page parameter in both GET and POST
 			$page = $_GET['page'] ?? $_POST['page'] ?? '';
-			
+
 			if ( $page === 'mets-entities' ) {
-				error_log( '[METS] Handling entity form submission' );
 				$this->handle_entity_form_submission();
 			} elseif ( $page === 'mets-tickets' || $page === 'mets-add-ticket' ) {
-				error_log( '[METS] Handling ticket form submission for page: ' . $page );
 				$this->handle_ticket_form_submission();
 			} elseif ( $page === 'mets-sla-rules' ) {
-				error_log( '[METS] Handling SLA rules form submission' );
 				$this->handle_sla_rules_form_submission();
 			} elseif ( $page === 'mets-business-hours' ) {
-				error_log( '[METS] Handling business hours form submission' );
 				$this->handle_business_hours_form_submission();
 			} elseif ( $page === 'mets-kb-add-article' && isset( $_POST['save_article'] ) ) {
-				error_log( '[METS] Handling KB article form submission' );
 				$this->handle_kb_article_form_submission();
 			}
 		} elseif ( isset( $_GET['page'] ) && $_GET['page'] === 'mets-entities' && isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['entity_id'] ) ) {
@@ -600,10 +588,6 @@ class METS_Admin {
 			return;
 		}
 		
-		// Debug: Log form submission
-		error_log( '[METS] Form submission started' );
-		error_log( '[METS] POST data: ' . print_r( $_POST, true ) );
-		
 		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
 		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-reply-model.php';
 		
@@ -620,9 +604,6 @@ class METS_Admin {
 		} else {
 			$action = sanitize_text_field( $_POST['action'] );
 		}
-		
-		error_log( '[METS] Detected action: ' . $action );
-		error_log( '[METS] Submit button values: submit_ticket=' . ( $_POST['submit_ticket'] ?? 'not set' ) . ', save_properties=' . ( $_POST['save_properties'] ?? 'not set' ) . ', add_reply_submit=' . ( $_POST['add_reply_submit'] ?? 'not set' ) );
 		
 		if ( $action === 'create' ) {
 			check_admin_referer( 'create_ticket', 'ticket_nonce' );
@@ -690,18 +671,16 @@ class METS_Admin {
 			exit;
 			
 		} elseif ( $action === 'update' ) {
-			error_log( '[METS] Processing update action' );
-			
 			try {
 				check_admin_referer( 'update_ticket', 'ticket_nonce' );
-				error_log( '[METS] Nonce check passed' );
 			} catch ( Exception $e ) {
-				error_log( '[METS] Nonce check failed: ' . $e->getMessage() );
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( '[METS] Nonce check failed: ' . $e->getMessage() );
+				}
 				return;
 			}
-			
+
 			$ticket_id = intval( $_POST['ticket_id'] );
-			error_log( '[METS] Updating ticket ID: ' . $ticket_id );
 			
 			// Get current ticket data for change tracking
 			$current_ticket = $ticket_model->get( $ticket_id );
@@ -737,14 +716,14 @@ class METS_Admin {
 			$result = $ticket_model->update( $ticket_id, $data );
 			
 			if ( is_wp_error( $result ) ) {
-				error_log( '[METS] Update failed: ' . $result->get_error_message() );
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( '[METS] Update failed: ' . $result->get_error_message() );
+				}
 				set_transient( 'mets_admin_notice', array(
 					'message' => $result->get_error_message(),
 					'type' => 'error'
 				), 45 );
 			} else {
-				error_log( '[METS] Update successful' );
-				
 				// Log changes as system reply
 				if ( ! empty( $changes ) ) {
 					$change_log = implode( "\n", $changes );
@@ -765,15 +744,13 @@ class METS_Admin {
 			}
 			
 			$redirect_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id );
-			error_log( '[METS] Redirecting to: ' . $redirect_url );
 			wp_redirect( $redirect_url );
 			exit;
-			
+
 		} elseif ( $action === 'update_properties' ) {
 			check_admin_referer( 'update_properties', 'properties_nonce' );
-			
+
 			$ticket_id = intval( $_POST['ticket_id'] );
-			error_log( '[METS] Updating properties for ticket ID: ' . $ticket_id );
 			
 			// Get current ticket data for change tracking
 			$current_ticket = $ticket_model->get( $ticket_id );
@@ -851,19 +828,17 @@ class METS_Admin {
 				}
 			}
 			
-			error_log( '[METS] Properties update data: ' . print_r( $data, true ) );
-			
 			$result = $ticket_model->update( $ticket_id, $data );
-			
+
 			if ( is_wp_error( $result ) ) {
-				error_log( '[METS] Properties update failed: ' . $result->get_error_message() );
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( '[METS] Properties update failed: ' . $result->get_error_message() );
+				}
 				set_transient( 'mets_admin_notice', array(
 					'message' => $result->get_error_message(),
 					'type' => 'error'
 				), 45 );
 			} else {
-				error_log( '[METS] Properties update successful' );
-				
 				// Log changes as system reply
 				if ( ! empty( $changes ) ) {
 					$change_log = implode( "\n", $changes );
@@ -884,10 +859,9 @@ class METS_Admin {
 			}
 			
 			$redirect_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id );
-			error_log( '[METS] Redirecting to: ' . $redirect_url );
 			wp_redirect( $redirect_url );
 			exit;
-			
+
 		} elseif ( $action === 'add_reply' ) {
 			check_admin_referer( 'add_reply', 'reply_nonce' );
 			
