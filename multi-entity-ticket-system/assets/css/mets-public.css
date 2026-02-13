@@ -1498,3 +1498,25 @@ textarea::after,
 	clip: rect(0, 0, 0, 0);
 	border: 0;
 }
+
+/* Focus Styles */
+.mets-ticket-form input:focus-visible,
+.mets-ticket-form select:focus-visible,
+.mets-ticket-form textarea:focus-visible,
+.mets-ticket-form button:focus-visible,
+.mets-btn:focus-visible,
+.mets-entity-item:focus-visible {
+	outline: 2px solid #2563eb;
+	outline-offset: 2px;
+}
+
+/* Keyboard-navigable entity dropdown */
+.mets-entity-item {
+	cursor: pointer;
+	padding: 8px 12px;
+}
+
+.mets-entity-item:focus-visible,
+.mets-entity-item:hover {
+	background-color: #f0f0f0;
+}
