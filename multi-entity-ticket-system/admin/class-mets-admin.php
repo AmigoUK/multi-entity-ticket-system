@@ -2168,7 +2168,11 @@ class METS_Admin {
 	 */
 	public function ajax_search_entities() {
 		check_ajax_referer( 'mets_admin_nonce', 'nonce' );
-		
+
+		if ( ! current_user_can( 'edit_tickets' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', METS_TEXT_DOMAIN ) ) );
+		}
+
 		// Placeholder for entity search
 		wp_send_json_success( array() );
 	}
@@ -2205,7 +2209,11 @@ class METS_Admin {
 	 */
 	public function ajax_assign_ticket() {
 		check_ajax_referer( 'mets_admin_nonce', 'nonce' );
-		
+
+		if ( ! current_user_can( 'edit_tickets' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', METS_TEXT_DOMAIN ) ) );
+		}
+
 		// Placeholder for ticket assignment
 		wp_send_json_success( array() );
 	}
@@ -2217,7 +2225,11 @@ class METS_Admin {
 	 */
 	public function ajax_change_ticket_status() {
 		check_ajax_referer( 'mets_admin_nonce', 'nonce' );
-		
+
+		if ( ! current_user_can( 'edit_tickets' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', METS_TEXT_DOMAIN ) ) );
+		}
+
 		// Placeholder for status change
 		wp_send_json_success( array() );
 	}
