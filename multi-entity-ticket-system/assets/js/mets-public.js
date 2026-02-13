@@ -352,26 +352,37 @@
 			
 			// Clear previous messages
 			successMessage.hide().empty();
+			// Clear previous messages
+			successMessage.hide().empty();
 			errorMessage.hide().empty();
-			
+
 			// Reset field error states
-			form.find('.mets-field-error').removeClass('mets-field-error');
-			
+			form.find('.mets-field-error').removeClass('mets-field-error').removeAttr('aria-invalid');
+			form.find('.mets-field-error-message').remove();
+
 			// Validate required fields
 			var isValid = true;
+			var firstErrorField = null;
+
 			form.find('[required]').each(function() {
-				if (!$(this).val().trim()) {
-					$(this).addClass('mets-field-error');
+				var $field = $(this);
+				if (!$field.val().trim()) {
+					$field.addClass('mets-field-error').attr('aria-invalid', 'true');
+					var label = $field.closest('.mets-form-group').find('label').text() || 'This field';
+					$field.after('<span class="mets-field-error-message" role="alert">' + label + ' is required.</span>');
+					if (!firstErrorField) firstErrorField = $field;
 					isValid = false;
 				}
 			});
-			
+
 			// Email validation
 			var emailField = form.find('input[type="email"]');
-			if (emailField.length > 0) {
+			if (emailField.length > 0 && emailField.val().trim()) {
 				var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 				if (!emailPattern.test(emailField.val())) {
-					emailField.addClass('mets-field-error');
+					emailField.addClass('mets-field-error').attr('aria-invalid', 'true');
+					emailField.after('<span class="mets-field-error-message" role="alert">Please enter a valid email address.</span>');
+					if (!firstErrorField) firstErrorField = emailField;
 					isValid = false;
 				}
 			}
@@ -401,7 +412,7 @@
 			}
 			
 			if (!isValid) {
-				errorMessage.text(mets_public_ajax.error_messages.required_fields || 'Please fill in all required fields correctly.').show();
+				if (firstErrorField) firstErrorField.focus();
 				return false;
 			}
 			
