@@ -263,5 +263,10 @@ class Test_METS_Ticket_Model extends METS_Test_Case {
         $num2 = $wpdb->get_var($wpdb->prepare("SELECT ticket_number FROM $table WHERE id = %d", $ticket2_id));
 
         $this->assertNotEquals($num1, $num2, 'Two tickets should never share a ticket number');
+
+        // Verify sequential numbering
+        $seq1 = intval(substr($num1, -4));
+        $seq2 = intval(substr($num2, -4));
+        $this->assertEquals($seq1 + 1, $seq2, 'Ticket numbers should be sequential');
     }
 }
