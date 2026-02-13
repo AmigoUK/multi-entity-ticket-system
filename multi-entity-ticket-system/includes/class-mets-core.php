@@ -908,16 +908,16 @@ class METS_Core {
 	 */
 	public function ajax_export_security_report() {
 		// Check nonce and permissions
-		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) || 
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) ||
 			 ! current_user_can( 'manage_options' ) ) {
-			wp_die( json_encode( array( 'success' => false, 'data' => 'Permission denied' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied', METS_TEXT_DOMAIN ) ) );
 		}
-		
+
 		$security_audit = METS_Security_Audit::get_instance();
 		$audit_report = $security_audit->get_latest_audit_report();
-		
+
 		if ( ! $audit_report ) {
-			wp_die( json_encode( array( 'success' => false, 'data' => 'No audit report available' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No audit report available', METS_TEXT_DOMAIN ) ) );
 		}
 		
 		// Generate filename
