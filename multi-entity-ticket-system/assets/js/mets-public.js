@@ -6,6 +6,7 @@
 		// Entity search functionality
 		var searchTimeout;
 		var kbSearchTimeout;
+		var currentKBRequest = null;
 		
 		$(document).off('input.mets', '.mets-entity-search').on('input.mets', '.mets-entity-search', function() {
 			var searchInput = $(this);
@@ -169,18 +170,24 @@
 		
 		function performMandatoryKBSearch() {
 			var searchTerm = $('#kb-gate-search').val().trim();
-			
+
 			if (searchTerm.length < 3) {
 				$('#kb-gate-results').hide();
 				return;
 			}
-			
-			$('#kb-gate-results-list').html('<div class="kb-gate-loading"><p>🔍 ' + 'Searching our knowledge base...' + '</p></div>');
+
+			// Cancel any in-flight request
+			if (currentKBRequest && currentKBRequest.readyState !== 4) {
+				currentKBRequest.abort();
+			}
+
+			$('#kb-gate-results-list').html('<div class="kb-gate-loading"><p>Searching our knowledge base...</p></div>');
 			$('#kb-gate-results').show();
-			
-			$.ajax({
+
+			currentKBRequest = $.ajax({
 				url: mets_public_ajax.ajax_url,
 				type: 'POST',
+				timeout: 15000,
 				data: {
 					action: 'mets_search_kb_articles',
 					nonce: mets_public_ajax.nonce,
@@ -194,8 +201,10 @@
 						$('#kb-gate-results-list').html('<div class="kb-gate-error"><p>Search failed. Please try a different search term.</p></div>');
 					}
 				},
-				error: function() {
-					$('#kb-gate-results-list').html('<div class="kb-gate-error"><p>Search request failed. Please try again.</p></div>');
+				error: function(xhr, status) {
+					if (status !== 'abort') {
+						$('#kb-gate-results-list').html('<div class="kb-gate-error"><p>Search request failed. Please try again.</p></div>');
+					}
 				}
 			});
 		}
