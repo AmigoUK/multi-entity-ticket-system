@@ -7,7 +7,7 @@
 		var searchTimeout;
 		var kbSearchTimeout;
 		
-		$(document).on('input', '.mets-entity-search', function() {
+		$(document).off('input.mets', '.mets-entity-search').on('input.mets', '.mets-entity-search', function() {
 			var searchInput = $(this);
 			var searchTerm = searchInput.val().trim();
 			var dropdown = searchInput.siblings('.mets-entity-results');
@@ -29,7 +29,7 @@
 		});
 		
 		// Handle entity selection
-		$(document).on('click', '.mets-entity-item', function() {
+		$(document).off('click.mets', '.mets-entity-item').on('click.mets', '.mets-entity-item', function() {
 			var result = $(this);
 			var entityId = result.data('entity-id');
 			var entityName = result.text();
@@ -43,7 +43,7 @@
 		});
 		
 		// Hide dropdown when clicking outside
-		$(document).on('click', function(e) {
+		$(document).off('click.mets-dropdown').on('click.mets-dropdown', function(e) {
 			if (!$(e.target).closest('.mets-entity-search-wrapper').length) {
 				$('.mets-entity-results').hide();
 			}
@@ -99,7 +99,7 @@
 		// Check if KB gate exists on the page
 		if ($('#mets-kb-search-gate').length > 0) {
 			// KB Gate search functionality
-			$('#kb-gate-search-btn, #kb-gate-search').on('click keypress', function(e) {
+			$('#kb-gate-search-btn, #kb-gate-search').off('click.mets keypress.mets').on('click.mets keypress.mets', function(e) {
 			if (e.type === 'click' || e.which === 13) {
 				e.preventDefault();
 				performMandatoryKBSearch();
@@ -107,7 +107,7 @@
 		});
 		
 		// Real-time search with debounce for KB gate
-		$('#kb-gate-search').on('input', function() {
+		$('#kb-gate-search').off('input.mets').on('input.mets', function() {
 			clearTimeout(kbGateSearchTimeout);
 			var searchTerm = $(this).val().trim();
 			
@@ -122,7 +122,7 @@
 		});
 		
 		// Handle "I found my answer" button
-		$('#kb-gate-found-answer').on('click', function() {
+		$('#kb-gate-found-answer').off('click.mets').on('click.mets', function() {
 			$('#kb-gate-results').hide();
 			$('#kb-gate-success').show();
 			hasSearchedKB = true;
@@ -137,7 +137,7 @@
 		});
 		
 		// Handle "I still need help" button
-		$('#kb-gate-need-help').on('click', function() {
+		$('#kb-gate-need-help').off('click.mets').on('click.mets', function() {
 			$('#mets-kb-search-gate').hide();
 			$('#mets-ticket-form').show();
 			hasSearchedKB = true;
@@ -160,7 +160,7 @@
 		});
 		
 		// Handle "Search Again" button
-		$('#kb-gate-search-again').on('click', function() {
+		$('#kb-gate-search-again').off('click.mets').on('click.mets', function() {
 			$('#kb-gate-success').hide();
 			$('#kb-gate-results').hide();
 			$('#kb-gate-search').val('').focus();
@@ -236,7 +236,7 @@
 			$('#kb-gate-results-list').html(resultsHtml);
 			
 			// Handle no results ticket creation
-			$('#kb-gate-no-results-ticket').on('click', function() {
+			$('#kb-gate-no-results-ticket').off('click.mets').on('click.mets', function() {
 				$('#kb-gate-need-help').trigger('click');
 			});
 		}
@@ -269,12 +269,12 @@
 		}
 		
 		// Listen for subject and description changes
-		$(document).on('input', '#ticket_subject, #ticket_description', function() {
+		$(document).off('input.mets', '#ticket_subject, #ticket_description').on('input.mets', '#ticket_subject, #ticket_description', function() {
 			triggerKbSearch();
 		});
 		
 		// Listen for entity changes
-		$(document).on('change', 'input[name="entity_id"]', function() {
+		$(document).off('change.mets', 'input[name="entity_id"]').on('change.mets', 'input[name="entity_id"]', function() {
 			triggerKbSearch();
 		});
 		
@@ -341,7 +341,7 @@
 		}
 
 		// Ticket form submission with progressive file upload
-		$('#mets-ticket-form').on('submit', function(e) {
+		$('#mets-ticket-form').off('submit.mets').on('submit.mets', function(e) {
 			e.preventDefault();
 			
 			var form = $(this);
@@ -559,7 +559,7 @@
 		}
 
 		// File Upload Preview Functionality
-		$(document).on('change', '#ticket_attachments', function() {
+		$(document).off('change.mets', '#ticket_attachments').on('change.mets', '#ticket_attachments', function() {
 			var files = this.files;
 			var fileList = $('.mets-file-list');
 			var filePreview = $('.mets-file-preview');
@@ -600,7 +600,7 @@
 		});
 		
 		// Remove file functionality
-		$(document).on('click', '.mets-file-remove', function() {
+		$(document).off('click.mets', '.mets-file-remove').on('click.mets', '.mets-file-remove', function() {
 			var index = $(this).data('index');
 			var fileInput = $('#ticket_attachments')[0];
 			var files = Array.from(fileInput.files);
