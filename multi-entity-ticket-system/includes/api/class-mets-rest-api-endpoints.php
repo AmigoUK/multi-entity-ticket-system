@@ -1471,7 +1471,8 @@ class METS_REST_API_Endpoints extends METS_REST_API {
 			$data['content'] = $article->content;
 			$data['visibility'] = $article->visibility;
 			$data['author_id'] = intval( $article->author_id );
-			$data['author_name'] = get_user_by( 'id', $article->author_id )->display_name;
+			$author = get_user_by( 'id', $article->author_id );
+			$data['author_name'] = $author ? $author->display_name : __( 'Unknown User', METS_TEXT_DOMAIN );
 			
 			// Include categories
 			require_once METS_PLUGIN_PATH . 'includes/models/class-mets-kb-article-model.php';
