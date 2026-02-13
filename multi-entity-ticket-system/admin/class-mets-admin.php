@@ -843,8 +843,10 @@ class METS_Admin {
 					$changes[] = sprintf( __( 'Category changed from "%s" to "%s"', METS_TEXT_DOMAIN ), $old_cat, $new_cat );
 				}
 				if ( $current_ticket->assigned_to != $data['assigned_to'] ) {
-					$old_user = $current_ticket->assigned_to ? get_user_by( 'ID', $current_ticket->assigned_to )->display_name : __( 'Unassigned', METS_TEXT_DOMAIN );
-					$new_user = $data['assigned_to'] ? get_user_by( 'ID', $data['assigned_to'] )->display_name : __( 'Unassigned', METS_TEXT_DOMAIN );
+					$old_user_obj = $current_ticket->assigned_to ? get_user_by( 'ID', $current_ticket->assigned_to ) : false;
+					$old_user = $old_user_obj ? $old_user_obj->display_name : __( 'Unassigned', METS_TEXT_DOMAIN );
+					$new_user_obj = $data['assigned_to'] ? get_user_by( 'ID', $data['assigned_to'] ) : false;
+					$new_user = $new_user_obj ? $new_user_obj->display_name : __( 'Unassigned', METS_TEXT_DOMAIN );
 					$changes[] = sprintf( __( 'Assignment changed from "%s" to "%s"', METS_TEXT_DOMAIN ), $old_user, $new_user );
 				}
 			}
