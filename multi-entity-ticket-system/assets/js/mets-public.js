@@ -692,11 +692,30 @@
 		});
 	});
 
-	// Helper AJAX function
-	function makeAjaxRequest(action, data, callback) {
+	/**
+	 * Reusable AJAX helper with loading states and error handling.
+	 *
+	 * @param {string}   action   WordPress AJAX action name
+	 * @param {object}   data     Request payload
+	 * @param {function} callback Success callback receiving response.data
+	 * @param {object}   opts     Optional: { button: jQuery button element, errorContainer: jQuery element }
+	 */
+	function makeAjaxRequest(action, data, callback, opts) {
+		opts = opts || {};
+		var $btn = opts.button || null;
+		var $errorContainer = opts.errorContainer || null;
+
+		if ($btn) {
+			$btn.addClass('mets-btn-loading').prop('disabled', true);
+		}
+		if ($errorContainer) {
+			$errorContainer.empty().hide();
+		}
+
 		$.ajax({
 			url: mets_public_ajax.ajax_url,
 			type: 'POST',
+			timeout: 30000,
 			data: $.extend({
 				action: action,
 				nonce: mets_public_ajax.nonce
@@ -705,11 +724,24 @@
 				if (response.success) {
 					callback(response.data);
 				} else {
-					console.error('AJAX Error:', response.data);
+					var msg = (response.data && response.data.message) || 'An error occurred. Please try again.';
+					if ($errorContainer) {
+						$errorContainer.html('<div class="mets-notice mets-notice-error">' + msg + '</div>').show();
+					}
 				}
 			},
-			error: function(xhr, status, error) {
-				console.error('AJAX Request Failed:', error);
+			error: function(xhr, status) {
+				var msg = status === 'timeout'
+					? 'The request timed out. Please check your connection and try again.'
+					: 'A network error occurred. Please try again.';
+				if ($errorContainer) {
+					$errorContainer.html('<div class="mets-notice mets-notice-error">' + msg + '</div>').show();
+				}
+			},
+			complete: function() {
+				if ($btn) {
+					$btn.removeClass('mets-btn-loading').prop('disabled', false);
+				}
 			}
 		});
 	}
