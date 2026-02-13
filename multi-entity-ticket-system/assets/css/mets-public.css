@@ -1520,3 +1520,19 @@ textarea::after,
 .mets-entity-item:hover {
 	background-color: #f0f0f0;
 }
+
+/* Responsive Form */
+@media screen and (max-width: 480px) {
+	.mets-ticket-form {
+		padding: 16px;
+	}
+
+	.mets-form-row {
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.mets-form-row .mets-form-group {
+		margin-bottom: 16px;
+	}
+}

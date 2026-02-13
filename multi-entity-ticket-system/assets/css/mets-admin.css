@@ -700,6 +700,25 @@ input[type="color"] {
 	letter-spacing: 0.5px;
 }
 
+/* Responsive Tables */
+@media screen and (max-width: 782px) {
+	.wp-list-table .column-ticket_number,
+	.wp-list-table .column-subject,
+	.wp-list-table .column-customer,
+	.wp-list-table .column-entity,
+	.wp-list-table .column-priority,
+	.wp-list-table .column-assigned_to,
+	.wp-list-table .column-created_at,
+	.wp-list-table .column-updated_at {
+		width: auto;
+	}
+
+	.mets-admin-table-wrapper {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+}
+
 /* Focus Styles - Admin */
 .mets-form-section input:focus-visible,
 .mets-form-section select:focus-visible,
