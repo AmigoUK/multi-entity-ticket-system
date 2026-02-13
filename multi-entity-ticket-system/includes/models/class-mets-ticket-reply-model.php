@@ -62,7 +62,7 @@ class METS_Ticket_Reply_Model {
 		$user_type = 'agent';
 		if ( ! empty( $data['user_type'] ) && in_array( $data['user_type'], array( 'customer', 'agent', 'system' ) ) ) {
 			$user_type = $data['user_type'];
-		} elseif ( empty( $data['user_id'] ) || $data['user_id'] == 0 ) {
+		} elseif ( empty( $data['user_id'] ) || intval( $data['user_id'] ) === 0 ) {
 			$user_type = 'system';
 		}
 
