@@ -269,4 +269,20 @@ class Test_METS_Ticket_Model extends METS_Test_Case {
         $seq2 = intval(substr($num2, -4));
         $this->assertEquals($seq1 + 1, $seq2, 'Ticket numbers should be sequential');
     }
+
+    /**
+     * Test that assigning a nonexistent user is rejected.
+     */
+    public function test_update_ticket_rejects_invalid_assignee() {
+        $ticket_id = $this->mets_factory->create_ticket();
+
+        require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+        $ticket_model = new METS_Ticket_Model();
+        $result = $ticket_model->update($ticket_id, [
+            'assigned_to' => 999999,
+        ]);
+
+        $this->assertInstanceOf(WP_Error::class, $result);
+        $this->assertEquals('invalid_assignee', $result->get_error_code());
+    }
 }
