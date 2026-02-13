@@ -699,3 +699,12 @@ input[type="color"] {
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 }
+
+/* Focus Styles - Admin */
+.mets-form-section input:focus-visible,
+.mets-form-section select:focus-visible,
+.mets-form-section textarea:focus-visible,
+.mets-form-section button:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
