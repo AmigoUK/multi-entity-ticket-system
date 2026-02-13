@@ -775,84 +775,39 @@ class METS_Admin {
 			check_admin_referer( 'update_properties', 'properties_nonce' );
 
 			$ticket_id = intval( $_POST['ticket_id'] );
-			
-			// Get current ticket data for change tracking
-			$current_ticket = $ticket_model->get( $ticket_id );
-			$changes = array();
-			
+
 			$data = array(
 				'status'      => sanitize_text_field( $_POST['ticket_status'] ),
 				'priority'    => sanitize_text_field( $_POST['ticket_priority'] ),
 				'category'    => ! empty( $_POST['ticket_category'] ) ? sanitize_text_field( $_POST['ticket_category'] ) : '',
 				'assigned_to' => ! empty( $_POST['assigned_to'] ) ? intval( $_POST['assigned_to'] ) : null,
 			);
-			
+
 			// Validate workflow rules for status changes
+			$current_ticket = $ticket_model->get( $ticket_id );
 			if ( $current_ticket && $current_ticket->status !== $data['status'] ) {
 				require_once METS_PLUGIN_PATH . 'includes/models/class-mets-workflow-model.php';
 				$workflow_model = new METS_Workflow_Model();
-				
 				$ticket_data = array(
 					'priority' => $data['priority'],
 					'category' => $data['category']
 				);
-				
-				$result = $workflow_model->is_transition_allowed( $current_ticket->status, $data['status'], get_current_user_id(), $ticket_data );
-				
-				if ( is_wp_error( $result ) ) {
+				$workflow_result = $workflow_model->is_transition_allowed( $current_ticket->status, $data['status'], get_current_user_id(), $ticket_data );
+
+				if ( is_wp_error( $workflow_result ) ) {
 					set_transient( 'mets_admin_notice', array(
-						'message' => sprintf( __( 'Status change not allowed: %s', METS_TEXT_DOMAIN ), $result->get_error_message() ),
+						'message' => sprintf( __( 'Status change not allowed: %s', METS_TEXT_DOMAIN ), $workflow_result->get_error_message() ),
 						'type' => 'error'
 					), 45 );
-					
-					$redirect_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id );
-					wp_redirect( $redirect_url );
+					wp_redirect( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id ) );
 					exit;
 				}
 			}
-			
-			// Track changes for logging
-			if ( $current_ticket ) {
-				if ( $current_ticket->status !== $data['status'] ) {
-					// Get status display names
-					$statuses = get_option( 'mets_ticket_statuses', array() );
-					$old_status_label = isset( $statuses[$current_ticket->status] ) ? $statuses[$current_ticket->status]['label'] : ucfirst( $current_ticket->status );
-					$new_status_label = isset( $statuses[$data['status']] ) ? $statuses[$data['status']]['label'] : ucfirst( $data['status'] );
-					
-					$status_change = sprintf( __( 'Status changed from "%s" to "%s"', METS_TEXT_DOMAIN ), $old_status_label, $new_status_label );
-					
-					// Add user information for workflow tracking
-					$current_user = wp_get_current_user();
-					$status_change .= ' ' . sprintf( __( 'by %s', METS_TEXT_DOMAIN ), $current_user->display_name );
-					
-					$changes[] = $status_change;
-				}
-				if ( $current_ticket->priority !== $data['priority'] ) {
-					// Get priority display names
-					$priorities = get_option( 'mets_ticket_priorities', array() );
-					$old_priority_label = isset( $priorities[$current_ticket->priority] ) ? $priorities[$current_ticket->priority]['label'] : ucfirst( $current_ticket->priority );
-					$new_priority_label = isset( $priorities[$data['priority']] ) ? $priorities[$data['priority']]['label'] : ucfirst( $data['priority'] );
-					
-					$changes[] = sprintf( __( 'Priority changed from "%s" to "%s"', METS_TEXT_DOMAIN ), $old_priority_label, $new_priority_label );
-				}
-				if ( $current_ticket->category !== $data['category'] ) {
-					// Get category display names
-					$categories = get_option( 'mets_ticket_categories', array() );
-					$old_cat = $current_ticket->category && isset( $categories[$current_ticket->category] ) ? $categories[$current_ticket->category] : ( $current_ticket->category ?: __( 'None', METS_TEXT_DOMAIN ) );
-					$new_cat = $data['category'] && isset( $categories[$data['category']] ) ? $categories[$data['category']] : ( $data['category'] ?: __( 'None', METS_TEXT_DOMAIN ) );
-					
-					$changes[] = sprintf( __( 'Category changed from "%s" to "%s"', METS_TEXT_DOMAIN ), $old_cat, $new_cat );
-				}
-				if ( $current_ticket->assigned_to !== $data['assigned_to'] ) {
-					$old_user_obj = $current_ticket->assigned_to ? get_user_by( 'ID', $current_ticket->assigned_to ) : false;
-					$old_user = $old_user_obj ? $old_user_obj->display_name : __( 'Unassigned', METS_TEXT_DOMAIN );
-					$new_user_obj = $data['assigned_to'] ? get_user_by( 'ID', $data['assigned_to'] ) : false;
-					$new_user = $new_user_obj ? $new_user_obj->display_name : __( 'Unassigned', METS_TEXT_DOMAIN );
-					$changes[] = sprintf( __( 'Assignment changed from "%s" to "%s"', METS_TEXT_DOMAIN ), $old_user, $new_user );
-				}
-			}
-			
-			$result = $ticket_model->update( $ticket_id, $data );
+
+			// Delegate to service layer for update + change tracking
+			require_once METS_PLUGIN_PATH . 'includes/services/class-mets-ticket-service.php';
+			$ticket_service = new METS_Ticket_Service();
+			$result = $ticket_service->update_ticket_properties( $ticket_id, $data );
 
 			if ( is_wp_error( $result ) ) {
 				set_transient( 'mets_admin_notice', array(
@@ -860,7 +815,8 @@ class METS_Admin {
 					'type' => 'error'
 				), 45 );
 			} else {
-				
+				$changes = $result['changes'];
+
 				// Log changes as system reply
 				if ( ! empty( $changes ) ) {
 					$change_log = implode( "\n", $changes );
@@ -873,13 +829,13 @@ class METS_Admin {
 					);
 					$reply_model->create( $reply_data );
 				}
-				
+
 				set_transient( 'mets_admin_notice', array(
 					'message' => __( 'Ticket properties updated successfully.', METS_TEXT_DOMAIN ),
 					'type' => 'success'
 				), 45 );
 			}
-			
+
 			$redirect_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id );
 			wp_redirect( $redirect_url );
 			exit;
