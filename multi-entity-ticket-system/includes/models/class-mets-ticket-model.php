@@ -164,9 +164,9 @@ class METS_Ticket_Model {
 		$result = $wpdb->insert( $this->table_name, $insert_data, $format );
 
 		if ( $result === false ) {
-			error_log( '[METS] Ticket creation failed. MySQL Error: ' . $wpdb->last_error );
-			error_log( '[METS] Insert data: ' . print_r( $insert_data, true ) );
-			error_log( '[METS] Table name: ' . $this->table_name );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[METS] Ticket creation failed. MySQL Error: ' . $wpdb->last_error );
+			}
 			return new WP_Error( 'db_error', __( 'Failed to create ticket.', METS_TEXT_DOMAIN ) . ' MySQL Error: ' . $wpdb->last_error );
 		}
 
