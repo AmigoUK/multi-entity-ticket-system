@@ -60,20 +60,24 @@ class METS_Ticket_Model {
 			$prefix = 'TKT';
 		}
 
-		// Get current year and month
-		$year = date( 'Y' );
-		$month = date( 'm' );
-		$date_prefix = $year . $month;
+		$date_prefix = date( 'Y' ) . date( 'm' );
 
-		// Use a retry mechanism to handle race conditions
-		$max_attempts = 10;
-		for ( $attempt = 1; $attempt <= $max_attempts; $attempt++ ) {
-			// Get the highest 4-digit sequence number for this entity and month
-			// Only consider properly formatted 4-digit sequences, ignore timestamp fallbacks
+		// Acquire a named lock to prevent concurrent generation
+		$lock_name = 'mets_ticket_num_' . $entity_id;
+		$lock_acquired = $wpdb->get_var(
+			$wpdb->prepare( "SELECT GET_LOCK(%s, 5)", $lock_name )
+		);
+
+		if ( ! $lock_acquired ) {
+			// Lock timeout — fall back to timestamp-based ID
+			return sprintf( '%s-%s-%s', $prefix, $date_prefix, time() );
+		}
+
+		try {
 			$max_sequence = $wpdb->get_var( $wpdb->prepare(
-				"SELECT MAX(CAST(SUBSTRING_INDEX(ticket_number, '-', -1) AS UNSIGNED)) 
-				FROM {$this->table_name} 
-				WHERE entity_id = %d 
+				"SELECT MAX(CAST(SUBSTRING_INDEX(ticket_number, '-', -1) AS UNSIGNED))
+				FROM {$this->table_name}
+				WHERE entity_id = %d
 				AND ticket_number LIKE %s
 				AND CHAR_LENGTH(SUBSTRING_INDEX(ticket_number, '-', -1)) = 4
 				AND SUBSTRING_INDEX(ticket_number, '-', -1) REGEXP '^[0-9]{4}$'",
@@ -82,27 +86,12 @@ class METS_Ticket_Model {
 			) );
 
 			$sequence = $max_sequence ? intval( $max_sequence ) + 1 : 1;
-
-			// Format: PREFIX-YYYYMM-NNNN
-			$ticket_number = sprintf( '%s-%s-%04d', $prefix, $date_prefix, $sequence );
-
-			// Check if this ticket number already exists (additional safety check)
-			$exists = $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM {$this->table_name} WHERE ticket_number = %s",
-				$ticket_number
-			) );
-
-			if ( ! $exists ) {
-				return $ticket_number;
-			}
-
-			// If it exists, try again with a small delay to avoid race conditions
-			usleep( 100000 ); // 0.1 second delay
+			return sprintf( '%s-%s-%04d', $prefix, $date_prefix, $sequence );
+		} finally {
+			$wpdb->query(
+				$wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name )
+			);
 		}
-
-		// Fallback: use timestamp-based unique identifier
-		$timestamp = time();
-		return sprintf( '%s-%s-%s', $prefix, $date_prefix, $timestamp );
 	}
 
 	/**

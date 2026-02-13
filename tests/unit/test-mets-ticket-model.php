@@ -230,8 +230,38 @@ class Test_METS_Ticket_Model extends METS_Test_Case {
         // In a real implementation, ticket number would be auto-generated
         // Here we simulate what the expected format should be
         $expected_number = 'TST-' . str_pad( $ticket_id, 6, '0', STR_PAD_LEFT );
-        
+
         // This test assumes ticket number generation is implemented
         $this->assertMatchesRegularExpression( '/^TST-\d{6}$/', $expected_number );
+    }
+
+    /**
+     * Test that ticket number generation produces unique sequential numbers.
+     */
+    public function test_create_ticket_generates_unique_numbers() {
+        $entity_id = $this->mets_factory->create_entity(['slug' => 'testco']);
+
+        $ticket1_id = $this->mets_factory->create_ticket([
+            'entity_id' => $entity_id,
+            'subject' => 'First ticket',
+            'description' => 'Test',
+            'customer_name' => 'User One',
+            'customer_email' => 'one@example.com',
+        ]);
+
+        $ticket2_id = $this->mets_factory->create_ticket([
+            'entity_id' => $entity_id,
+            'subject' => 'Second ticket',
+            'description' => 'Test',
+            'customer_name' => 'User Two',
+            'customer_email' => 'two@example.com',
+        ]);
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mets_tickets';
+        $num1 = $wpdb->get_var($wpdb->prepare("SELECT ticket_number FROM $table WHERE id = %d", $ticket1_id));
+        $num2 = $wpdb->get_var($wpdb->prepare("SELECT ticket_number FROM $table WHERE id = %d", $ticket2_id));
+
+        $this->assertNotEquals($num1, $num2, 'Two tickets should never share a ticket number');
     }
 }
