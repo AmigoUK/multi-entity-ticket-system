@@ -425,8 +425,13 @@ class METS_KB_Article_Model {
 	public function update_helpful_count( $id, $helpful = true ) {
 		global $wpdb;
 
+		$allowed_fields = array( 'helpful_count', 'not_helpful_count' );
 		$field = $helpful ? 'helpful_count' : 'not_helpful_count';
-		
+
+		if ( ! in_array( $field, $allowed_fields, true ) ) {
+			return false;
+		}
+
 		$result = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$this->table_name} SET {$field} = {$field} + 1 WHERE id = %d",
