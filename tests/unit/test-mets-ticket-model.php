@@ -217,6 +217,21 @@ class Test_METS_Ticket_Model extends METS_Test_Case {
     }
 
     /**
+     * Test that assigning a nonexistent user is rejected.
+     */
+    public function test_update_ticket_rejects_invalid_assignee() {
+        $ticket_id = $this->mets_factory->create_ticket();
+
+        $ticket_model = new METS_Ticket_Model();
+        $result = $ticket_model->update($ticket_id, [
+            'assigned_to' => 999999, // nonexistent user
+        ]);
+
+        $this->assertInstanceOf(WP_Error::class, $result);
+        $this->assertEquals('invalid_assignee', $result->get_error_code());
+    }
+
+    /**
      * Test that ticket number generation uses database locking
      * to prevent race conditions.
      */

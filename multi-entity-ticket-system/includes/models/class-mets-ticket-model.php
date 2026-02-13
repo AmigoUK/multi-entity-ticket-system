@@ -305,7 +305,15 @@ class METS_Ticket_Model {
 		}
 
 		if ( isset( $data['assigned_to'] ) ) {
-			$update_data['assigned_to'] = ! empty( $data['assigned_to'] ) ? intval( $data['assigned_to'] ) : null;
+			if ( ! empty( $data['assigned_to'] ) ) {
+				$assignee = get_userdata( intval( $data['assigned_to'] ) );
+				if ( ! $assignee ) {
+					return new WP_Error( 'invalid_assignee', __( 'Assigned user does not exist.', METS_TEXT_DOMAIN ) );
+				}
+				$update_data['assigned_to'] = intval( $data['assigned_to'] );
+			} else {
+				$update_data['assigned_to'] = null;
+			}
 			$format[] = '%d';
 		}
 
