@@ -836,15 +836,15 @@ class METS_Core {
 	 */
 	public function ajax_run_security_audit() {
 		// Check nonce and permissions
-		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) || 
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) ||
 			 ! current_user_can( 'manage_options' ) ) {
-			wp_die( json_encode( array( 'success' => false, 'data' => 'Permission denied' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied', METS_TEXT_DOMAIN ) ) );
 		}
-		
+
 		$security_audit = METS_Security_Audit::get_instance();
 		$audit_report = $security_audit->run_security_audit();
-		
-		wp_die( json_encode( array( 'success' => true, 'data' => $audit_report ) ) );
+
+		wp_send_json_success( $audit_report );
 	}
 
 	/**
@@ -854,13 +854,13 @@ class METS_Core {
 	 */
 	public function ajax_save_security_config() {
 		// Check nonce and permissions
-		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) || 
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) ||
 			 ! current_user_can( 'manage_options' ) ) {
-			wp_die( json_encode( array( 'success' => false, 'data' => 'Permission denied' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied', METS_TEXT_DOMAIN ) ) );
 		}
-		
+
 		parse_str( $_POST['config'], $config_data );
-		
+
 		$security_config = array(
 			'enable_rate_limiting' => isset( $config_data['enable_rate_limiting'] ) ? 1 : 0,
 			'enable_input_validation' => isset( $config_data['enable_input_validation'] ) ? 1 : 0,
@@ -868,11 +868,15 @@ class METS_Core {
 			'max_login_attempts' => intval( $config_data['max_login_attempts'] ),
 			'lockout_duration' => intval( $config_data['lockout_duration'] ) * 60 // Convert to seconds
 		);
-		
+
 		$security_manager = METS_Security_Manager::get_instance();
 		$result = $security_manager->update_security_config( $security_config );
-		
-		wp_die( json_encode( array( 'success' => $result ) ) );
+
+		if ( $result ) {
+			wp_send_json_success();
+		} else {
+			wp_send_json_error();
+		}
 	}
 
 	/**
@@ -882,22 +886,19 @@ class METS_Core {
 	 */
 	public function ajax_clear_security_logs() {
 		// Check nonce and permissions
-		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) || 
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) ||
 			 ! current_user_can( 'manage_options' ) ) {
-			wp_die( json_encode( array( 'success' => false, 'data' => 'Permission denied' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied', METS_TEXT_DOMAIN ) ) );
 		}
-		
+
 		global $wpdb;
 		$deleted = $wpdb->query( $wpdb->prepare(
-			"DELETE FROM {$wpdb->prefix}mets_security_log 
+			"DELETE FROM {$wpdb->prefix}mets_security_log
 			WHERE created_at < %s",
 			date( 'Y-m-d H:i:s', strtotime( '-90 days' ) )
 		) );
-		
-		wp_die( json_encode( array( 
-			'success' => true, 
-			'data' => sprintf( __( 'Deleted %d old security log entries', METS_TEXT_DOMAIN ), $deleted )
-		) ) );
+
+		wp_send_json_success( sprintf( __( 'Deleted %d old security log entries', METS_TEXT_DOMAIN ), $deleted ) );
 	}
 
 	/**
@@ -938,18 +939,15 @@ class METS_Core {
 	 */
 	public function ajax_reset_rate_limits() {
 		// Check nonce and permissions
-		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) || 
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'mets_security_action' ) ||
 			 ! current_user_can( 'manage_options' ) ) {
-			wp_die( json_encode( array( 'success' => false, 'data' => 'Permission denied' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied', METS_TEXT_DOMAIN ) ) );
 		}
-		
+
 		global $wpdb;
 		$deleted = $wpdb->query( "DELETE FROM {$wpdb->prefix}mets_rate_limits" );
-		
-		wp_die( json_encode( array( 
-			'success' => true, 
-			'data' => sprintf( __( 'Reset %d rate limit entries', METS_TEXT_DOMAIN ), $deleted )
-		) ) );
+
+		wp_send_json_success( sprintf( __( 'Reset %d rate limit entries', METS_TEXT_DOMAIN ), $deleted ) );
 	}
 
 	/**
