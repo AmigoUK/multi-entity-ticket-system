@@ -1474,3 +1474,27 @@ textarea::after,
 	border: 1px solid #bbf7d0;
 	color: #166534;
 }
+
+/* Field Validation */
+.mets-field-error {
+	border-color: #dc2626 !important;
+	box-shadow: 0 0 0 1px #dc2626;
+}
+
+.mets-field-error-message {
+	color: #dc2626;
+	font-size: 12px;
+	margin-top: 4px;
+	display: block;
+}
+
+.mets-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
