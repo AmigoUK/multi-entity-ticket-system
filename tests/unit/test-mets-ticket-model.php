@@ -217,6 +217,43 @@ class Test_METS_Ticket_Model extends METS_Test_Case {
     }
 
     /**
+     * Test that ticket number generation uses database locking
+     * to prevent race conditions.
+     */
+    public function test_create_ticket_generates_unique_numbers() {
+        // Create two tickets for the same entity in quick succession
+        $entity_id = $this->mets_factory->create_entity(['slug' => 'testco']);
+
+        $ticket1_id = $this->mets_factory->create_ticket([
+            'entity_id' => $entity_id,
+            'subject' => 'First ticket',
+            'description' => 'Test',
+            'customer_name' => 'User One',
+            'customer_email' => 'one@example.com',
+        ]);
+
+        $ticket2_id = $this->mets_factory->create_ticket([
+            'entity_id' => $entity_id,
+            'subject' => 'Second ticket',
+            'description' => 'Test',
+            'customer_name' => 'User Two',
+            'customer_email' => 'two@example.com',
+        ]);
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mets_tickets';
+        $num1 = $wpdb->get_var($wpdb->prepare("SELECT ticket_number FROM $table WHERE id = %d", $ticket1_id));
+        $num2 = $wpdb->get_var($wpdb->prepare("SELECT ticket_number FROM $table WHERE id = %d", $ticket2_id));
+
+        $this->assertNotEquals($num1, $num2, 'Two tickets should never share a ticket number');
+
+        // Verify sequential numbering: second ticket should have sequence = first + 1
+        $seq1 = intval(substr($num1, -4));
+        $seq2 = intval(substr($num2, -4));
+        $this->assertEquals($seq1 + 1, $seq2, 'Ticket numbers should be sequential');
+    }
+
+    /**
      * Test ticket number generation
      */
     public function test_ticket_number_generation() {

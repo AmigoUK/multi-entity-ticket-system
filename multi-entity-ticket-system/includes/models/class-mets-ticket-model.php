@@ -65,15 +65,25 @@ class METS_Ticket_Model {
 		$month = date( 'm' );
 		$date_prefix = $year . $month;
 
-		// Use a retry mechanism to handle race conditions
-		$max_attempts = 10;
-		for ( $attempt = 1; $attempt <= $max_attempts; $attempt++ ) {
+		// Acquire a named database lock to prevent race conditions (TOCTOU)
+		$lock_name = 'mets_ticket_number_' . $entity_id;
+		$lock_acquired = $wpdb->get_var( $wpdb->prepare(
+			"SELECT GET_LOCK(%s, 5)",
+			$lock_name
+		) );
+
+		if ( ! $lock_acquired ) {
+			// Fallback: use timestamp-based unique identifier if lock cannot be acquired
+			$timestamp = time();
+			return sprintf( '%s-%s-%s', $prefix, $date_prefix, $timestamp );
+		}
+
+		try {
 			// Get the highest 4-digit sequence number for this entity and month
-			// Only consider properly formatted 4-digit sequences, ignore timestamp fallbacks
 			$max_sequence = $wpdb->get_var( $wpdb->prepare(
-				"SELECT MAX(CAST(SUBSTRING_INDEX(ticket_number, '-', -1) AS UNSIGNED)) 
-				FROM {$this->table_name} 
-				WHERE entity_id = %d 
+				"SELECT MAX(CAST(SUBSTRING_INDEX(ticket_number, '-', -1) AS UNSIGNED))
+				FROM {$this->table_name}
+				WHERE entity_id = %d
 				AND ticket_number LIKE %s
 				AND CHAR_LENGTH(SUBSTRING_INDEX(ticket_number, '-', -1)) = 4
 				AND SUBSTRING_INDEX(ticket_number, '-', -1) REGEXP '^[0-9]{4}$'",
@@ -86,23 +96,14 @@ class METS_Ticket_Model {
 			// Format: PREFIX-YYYYMM-NNNN
 			$ticket_number = sprintf( '%s-%s-%04d', $prefix, $date_prefix, $sequence );
 
-			// Check if this ticket number already exists (additional safety check)
-			$exists = $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM {$this->table_name} WHERE ticket_number = %s",
-				$ticket_number
+			return $ticket_number;
+		} finally {
+			// Always release the lock
+			$wpdb->query( $wpdb->prepare(
+				"SELECT RELEASE_LOCK(%s)",
+				$lock_name
 			) );
-
-			if ( ! $exists ) {
-				return $ticket_number;
-			}
-
-			// If it exists, try again with a small delay to avoid race conditions
-			usleep( 100000 ); // 0.1 second delay
 		}
-
-		// Fallback: use timestamp-based unique identifier
-		$timestamp = time();
-		return sprintf( '%s-%s-%s', $prefix, $date_prefix, $timestamp );
 	}
 
 	/**
