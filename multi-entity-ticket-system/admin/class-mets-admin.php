@@ -641,9 +641,9 @@ class METS_Admin {
 				'entity_id'       => intval( $_POST['ticket_entity'] ),
 				'subject'         => sanitize_text_field( $_POST['ticket_subject'] ),
 				'description'     => wp_kses_post( $_POST['ticket_description'] ),
-				'status'          => isset( $_POST['ticket_status'] ) ? sanitize_text_field( $_POST['ticket_status'] ) : 'new',
-				'priority'        => isset( $_POST['ticket_priority'] ) ? sanitize_text_field( $_POST['ticket_priority'] ) : 'normal',
-				'category'        => ! empty( $_POST['ticket_category'] ) ? sanitize_text_field( $_POST['ticket_category'] ) : '',
+				'status'          => isset( $_POST['sidebar_ticket_status'] ) ? sanitize_text_field( $_POST['sidebar_ticket_status'] ) : 'new',
+				'priority'        => isset( $_POST['sidebar_ticket_priority'] ) ? sanitize_text_field( $_POST['sidebar_ticket_priority'] ) : 'normal',
+				'category'        => ! empty( $_POST['sidebar_ticket_category'] ) ? sanitize_text_field( $_POST['sidebar_ticket_category'] ) : '',
 				'customer_name'   => sanitize_text_field( $_POST['customer_name'] ),
 				'customer_email'  => sanitize_email( $_POST['customer_email'] ),
 				'customer_phone'  => sanitize_text_field( $_POST['customer_phone'] ),
@@ -695,7 +695,7 @@ class METS_Admin {
 						'type' => 'success'
 					), 45 );
 				}
-				wp_redirect( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $result ) );
+				wp_redirect( admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $result ) );
 			}
 			exit;
 			
@@ -767,7 +767,7 @@ class METS_Admin {
 				), 45 );
 			}
 			
-			$redirect_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id );
+			$redirect_url = admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket_id );
 			wp_redirect( $redirect_url );
 			exit;
 
@@ -799,7 +799,7 @@ class METS_Admin {
 						'message' => sprintf( __( 'Status change not allowed: %s', METS_TEXT_DOMAIN ), $workflow_result->get_error_message() ),
 						'type' => 'error'
 					), 45 );
-					wp_redirect( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id ) );
+					wp_redirect( admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket_id ) );
 					exit;
 				}
 			}
@@ -836,7 +836,7 @@ class METS_Admin {
 				), 45 );
 			}
 
-			$redirect_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id );
+			$redirect_url = admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket_id );
 			wp_redirect( $redirect_url );
 			exit;
 
@@ -898,7 +898,7 @@ class METS_Admin {
 				}
 			}
 			
-			wp_redirect( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket_id ) );
+			wp_redirect( admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket_id ) );
 			exit;
 		}
 	}
@@ -933,7 +933,7 @@ class METS_Admin {
 			), 45 );
 		}
 		
-		wp_redirect( admin_url( 'admin.php?page=mets-tickets' ) );
+		wp_redirect( admin_url( 'admin.php?page=mets-all-tickets' ) );
 		exit;
 	}
 
@@ -2410,7 +2410,7 @@ class METS_Admin {
 							$breach_count++;
 					?>
 						<li>
-							<a href="<?php echo admin_url( 'admin.php?page=mets-tickets&action=view&ticket_id=' . $ticket->id ); ?>">
+							<a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets&action=view&ticket_id=' . $ticket->id ); ?>">
 								#<?php echo esc_html( $ticket->ticket_number ); ?> - <?php echo esc_html( wp_trim_words( $ticket->subject, 8 ) ); ?>
 							</a>
 							<span class="mets-ticket-priority priority-<?php echo esc_attr( $ticket->priority ); ?>">
@@ -2423,7 +2423,7 @@ class METS_Admin {
 					if ( count( $breached_tickets ) > $breach_limit ):
 					?>
 						<li class="mets-more-items">
-							<a href="<?php echo admin_url( 'admin.php?page=mets-tickets&sla_status=breached' ); ?>">
+							<a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets&sla_status=breached' ); ?>">
 								<?php printf( __( '+%d more breached tickets', METS_TEXT_DOMAIN ), count( $breached_tickets ) - $breach_limit ); ?>
 							</a>
 						</li>
@@ -2449,7 +2449,7 @@ class METS_Admin {
 							$warning_count++;
 					?>
 						<li>
-							<a href="<?php echo admin_url( 'admin.php?page=mets-tickets&action=view&ticket_id=' . $ticket->id ); ?>">
+							<a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets&action=view&ticket_id=' . $ticket->id ); ?>">
 								#<?php echo esc_html( $ticket->ticket_number ); ?> - <?php echo esc_html( wp_trim_words( $ticket->subject, 8 ) ); ?>
 							</a>
 							<span class="mets-ticket-priority priority-<?php echo esc_attr( $ticket->priority ); ?>">
@@ -2462,7 +2462,7 @@ class METS_Admin {
 					if ( count( $approaching_breach ) > $warning_limit ):
 					?>
 						<li class="mets-more-items">
-							<a href="<?php echo admin_url( 'admin.php?page=mets-tickets&sla_status=warning' ); ?>">
+							<a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets&sla_status=warning' ); ?>">
 								<?php printf( __( '+%d more tickets approaching breach', METS_TEXT_DOMAIN ), count( $approaching_breach ) - $warning_limit ); ?>
 							</a>
 						</li>
@@ -2496,7 +2496,7 @@ class METS_Admin {
 					<a href="<?php echo admin_url( 'admin.php?page=mets-sla-rules' ); ?>" class="button">
 						<?php _e( 'Manage SLA Rules', METS_TEXT_DOMAIN ); ?>
 					</a>
-					<a href="<?php echo admin_url( 'admin.php?page=mets-tickets' ); ?>" class="button button-primary">
+					<a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets' ); ?>" class="button button-primary">
 						<?php _e( 'View All Tickets', METS_TEXT_DOMAIN ); ?>
 					</a>
 				</div>
@@ -2727,7 +2727,7 @@ class METS_Admin {
 				<a href="<?php echo admin_url( 'admin.php?page=mets-add-ticket' ); ?>" class="button button-primary">
 					<?php _e( 'Add New Ticket', METS_TEXT_DOMAIN ); ?>
 				</a>
-				<a href="<?php echo admin_url( 'admin.php?page=mets-tickets' ); ?>" class="button">
+				<a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets' ); ?>" class="button">
 					<?php _e( 'View All Tickets', METS_TEXT_DOMAIN ); ?>
 				</a>
 			</div>

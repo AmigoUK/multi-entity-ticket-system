@@ -1478,7 +1478,7 @@ class METS_Comprehensive_Dashboard {
                     <?php foreach ( $recent_tickets as $ticket ) : ?>
                     <tr>
                         <td>
-                            <a href="<?php echo admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket->id ); ?>">
+                            <a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket->id ); ?>">
                                 #<?php echo esc_html( $ticket->id ); ?> - <?php echo esc_html( $ticket->subject ); ?>
                             </a>
                         </td>

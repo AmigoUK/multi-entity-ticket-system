@@ -142,9 +142,9 @@ class METS_Tickets_List extends WP_List_Table {
 	 * @return   string             Column content
 	 */
 	public function column_ticket_number( $item ) {
-		$edit_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $item->id );
+		$edit_url = admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $item->id );
 		$delete_url = wp_nonce_url(
-			admin_url( 'admin.php?page=mets-tickets&action=delete&ticket_id=' . $item->id ),
+			admin_url( 'admin.php?page=mets-all-tickets&action=delete&ticket_id=' . $item->id ),
 			'delete_ticket_' . $item->id
 		);
 
@@ -174,7 +174,7 @@ class METS_Tickets_List extends WP_List_Table {
 	 * @return   string             Column content
 	 */
 	public function column_subject( $item ) {
-		$edit_url = admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $item->id );
+		$edit_url = admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $item->id );
 		
 		return sprintf(
 			'<a href="%s" class="row-title">%s</a>',

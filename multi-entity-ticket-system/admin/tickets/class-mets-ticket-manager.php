@@ -313,7 +313,7 @@ class METS_Ticket_Manager {
 
 							<p class="submit">
 								<?php submit_button( $is_edit ? __( 'Update Ticket Details', METS_TEXT_DOMAIN ) : __( 'Create Ticket', METS_TEXT_DOMAIN ), 'primary', 'submit_ticket', false, array( 'form' => 'ticket-form' ) ); ?>
-								<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-tickets' ) ); ?>" class="button button-secondary">
+								<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-all-tickets' ) ); ?>" class="button button-secondary">
 									<?php _e( 'Cancel', METS_TEXT_DOMAIN ); ?>
 								</a>
 							</p>
