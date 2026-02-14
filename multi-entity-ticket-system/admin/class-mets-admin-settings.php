@@ -21,9 +21,24 @@ class METS_Admin_Settings {
 	 */
 	private $version;
 
+	/**
+	 * @var METS_Admin|null Admin instance for delegating SLA/Business Hours rendering.
+	 */
+	private $admin;
+
 	public function __construct( $plugin_name, $version ) {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
+	}
+
+	/**
+	 * Set admin instance for SLA/Business Hours tab delegation.
+	 *
+	 * @since 1.2.0
+	 * @param METS_Admin $admin Admin instance.
+	 */
+	public function set_admin( $admin ) {
+		$this->admin = $admin;
 	}
 
 	/**
@@ -418,14 +433,16 @@ class METS_Admin_Settings {
 		// Tab navigation
 		echo '<nav class="nav-tab-wrapper">';
 		$tabs = array(
-			'general'    => __( 'General', METS_TEXT_DOMAIN ),
-			'statuses'   => __( 'Statuses', METS_TEXT_DOMAIN ),
-			'priorities' => __( 'Priorities', METS_TEXT_DOMAIN ),
-			'categories' => __( 'Categories', METS_TEXT_DOMAIN ),
-			'workflow'   => __( 'Workflow Rules', METS_TEXT_DOMAIN ),
-			'email_smtp' => __( 'Email & SMTP', METS_TEXT_DOMAIN ),
-			'n8n_chat'   => __( 'n8n Chat', METS_TEXT_DOMAIN ),
-			'shortcodes' => __( 'Shortcodes', METS_TEXT_DOMAIN ),
+			'general'        => __( 'General', METS_TEXT_DOMAIN ),
+			'statuses'       => __( 'Statuses', METS_TEXT_DOMAIN ),
+			'priorities'     => __( 'Priorities', METS_TEXT_DOMAIN ),
+			'categories'     => __( 'Categories', METS_TEXT_DOMAIN ),
+			'workflow'       => __( 'Workflow Rules', METS_TEXT_DOMAIN ),
+			'sla_rules'      => __( 'SLA Rules', METS_TEXT_DOMAIN ),
+			'business_hours' => __( 'Business Hours', METS_TEXT_DOMAIN ),
+			'email_smtp'     => __( 'Email & SMTP', METS_TEXT_DOMAIN ),
+			'n8n_chat'       => __( 'n8n Chat', METS_TEXT_DOMAIN ),
+			'shortcodes'     => __( 'Shortcodes', METS_TEXT_DOMAIN ),
 		);
 
 		foreach ( $tabs as $tab_key => $tab_label ) {
@@ -449,6 +466,12 @@ class METS_Admin_Settings {
 				break;
 			case 'workflow':
 				$this->display_workflow_settings();
+				break;
+			case 'sla_rules':
+				$this->display_sla_rules_tab();
+				break;
+			case 'business_hours':
+				$this->display_business_hours_tab();
 				break;
 			case 'email_smtp':
 				$this->display_smtp_settings();
@@ -1841,5 +1864,57 @@ class METS_Admin_Settings {
 		require_once METS_PLUGIN_PATH . 'admin/class-mets-woocommerce-settings.php';
 		$wc_settings = new METS_WooCommerce_Settings();
 		$wc_settings->display_settings_page();
+	}
+
+	/**
+	 * Display SLA Rules tab content (embedded from admin class).
+	 *
+	 * @since 1.2.0
+	 */
+	private function display_sla_rules_tab() {
+		if ( ! $this->admin ) {
+			echo '<p>' . __( 'SLA Rules configuration is not available.', METS_TEXT_DOMAIN ) . '</p>';
+			return;
+		}
+
+		ob_start();
+		$this->admin->display_sla_rules_page();
+		$content = ob_get_clean();
+
+		// Strip outer wrap and h1
+		$content = preg_replace( '/^\s*<div class="wrap">\s*/s', '', $content );
+		$content = preg_replace( '/\s*<\/div>\s*$/s', '', $content );
+		$content = preg_replace( '/<h1[^>]*>.*?<\/h1>/s', '', $content, 1 );
+
+		// Rewrite internal links: page=mets-sla-rules → page=mets-settings&tab=sla_rules
+		$content = str_replace( 'page=mets-sla-rules', 'page=mets-settings&tab=sla_rules', $content );
+
+		echo $content;
+	}
+
+	/**
+	 * Display Business Hours tab content (embedded from admin class).
+	 *
+	 * @since 1.2.0
+	 */
+	private function display_business_hours_tab() {
+		if ( ! $this->admin ) {
+			echo '<p>' . __( 'Business Hours configuration is not available.', METS_TEXT_DOMAIN ) . '</p>';
+			return;
+		}
+
+		ob_start();
+		$this->admin->display_business_hours_page();
+		$content = ob_get_clean();
+
+		// Strip outer wrap and h1
+		$content = preg_replace( '/^\s*<div class="wrap">\s*/s', '', $content );
+		$content = preg_replace( '/\s*<\/div>\s*$/s', '', $content );
+		$content = preg_replace( '/<h1[^>]*>.*?<\/h1>/s', '', $content, 1 );
+
+		// Rewrite internal links: page=mets-business-hours → page=mets-settings&tab=business_hours
+		$content = str_replace( 'page=mets-business-hours', 'page=mets-settings&tab=business_hours', $content );
+
+		echo $content;
 	}
 }

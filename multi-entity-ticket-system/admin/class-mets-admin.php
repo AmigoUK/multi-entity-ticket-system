@@ -60,6 +60,9 @@ class METS_Admin {
 		// Add dashboard widget hook
 		add_action( 'wp_dashboard_setup', array( $this, 'add_dashboard_widgets' ) );
 
+		// Admin menu separator styles
+		add_action( 'admin_head', array( $this, 'admin_menu_separator_styles' ) );
+
 		// Add report export handler
 		add_action( 'init', array( $this, 'handle_report_export' ) );
 
@@ -115,6 +118,7 @@ class METS_Admin {
 		// Delegate settings management to dedicated class
 		require_once METS_PLUGIN_PATH . 'admin/class-mets-admin-settings.php';
 		$this->settings_handler = new METS_Admin_Settings( $this->plugin_name, $this->version );
+		$this->settings_handler->set_admin( $this );
 	}
 
 	/**
@@ -185,12 +189,22 @@ class METS_Admin {
 		// Ensure KB capabilities are available
 		$this->ensure_kb_capabilities();
 
+		// Get badge counts for menu items
+		$badges = $this->get_menu_badge_counts();
+		$total_alerts = $badges['unassigned'] + $badges['sla_breaches'] + $badges['pending_reviews'];
+
+		// Top-level menu title with combined badge
+		$menu_title = __( 'METS Tickets', METS_TEXT_DOMAIN );
+		if ( $total_alerts > 0 ) {
+			$menu_title .= ' <span class="awaiting-mod count-' . $total_alerts . '"><span class="pending-count">' . $total_alerts . '</span></span>';
+		}
+
 		// ==============================================
 		// MAIN MENU: METS TICKETS
 		// ==============================================
 		add_menu_page(
 			__( 'METS Tickets', METS_TEXT_DOMAIN ),
-			__( 'METS Tickets', METS_TEXT_DOMAIN ),
+			$menu_title,
 			'manage_tickets',
 			'mets-tickets',
 			array( $this, 'display_dashboard_page' ),
@@ -199,44 +213,51 @@ class METS_Admin {
 		);
 
 		// ==============================================
-		// 1. DASHBOARD (Primary)
+		// 1. DASHBOARD
 		// ==============================================
 		add_submenu_page(
 			'mets-tickets',
 			__( 'Dashboard', METS_TEXT_DOMAIN ),
-			__( '📊 Dashboard', METS_TEXT_DOMAIN ),
+			__( 'Dashboard', METS_TEXT_DOMAIN ),
 			'manage_tickets',
 			'mets-tickets',
 			array( $this, 'display_dashboard_page' )
 		);
 
 		// ==============================================
-		// 2. TICKETS (Primary)
+		// 2. TICKETS
 		// ==============================================
+		$tickets_label = __( 'All Tickets', METS_TEXT_DOMAIN );
+		$ticket_alerts = $badges['unassigned'] + $badges['sla_breaches'];
+		if ( $ticket_alerts > 0 ) {
+			$tickets_label .= ' <span class="awaiting-mod count-' . $ticket_alerts . '"><span class="pending-count">' . $ticket_alerts . '</span></span>';
+		}
 		add_submenu_page(
 			'mets-tickets',
 			__( 'All Tickets', METS_TEXT_DOMAIN ),
-			__( '🎫 All Tickets', METS_TEXT_DOMAIN ),
+			$tickets_label,
 			'manage_tickets',
 			'mets-all-tickets',
 			array( $this, 'display_tickets_page' )
 		);
 
+		// Add New Ticket — hidden from menu, accessible via direct URL
 		add_submenu_page(
 			'mets-tickets',
 			__( 'Add New Ticket', METS_TEXT_DOMAIN ),
-			__( '➕ Add New Ticket', METS_TEXT_DOMAIN ),
+			__( 'Add New Ticket', METS_TEXT_DOMAIN ),
 			'edit_tickets',
 			'mets-add-ticket',
 			array( $this, 'display_add_ticket_page' )
 		);
+		remove_submenu_page( 'mets-tickets', 'mets-add-ticket' );
 
 		// My Assigned Tickets (for agents)
 		if ( current_user_can( 'edit_tickets' ) && ! current_user_can( 'manage_tickets' ) ) {
 			add_submenu_page(
 				'mets-tickets',
 				__( 'My Assigned Tickets', METS_TEXT_DOMAIN ),
-				__( '👤 My Tickets', METS_TEXT_DOMAIN ),
+				__( 'My Tickets', METS_TEXT_DOMAIN ),
 				'edit_tickets',
 				'mets-my-tickets',
 				array( $this, 'display_my_tickets_page' )
@@ -247,71 +268,113 @@ class METS_Admin {
 		add_submenu_page(
 			'mets-tickets',
 			__( 'Bulk Operations', METS_TEXT_DOMAIN ),
-			__( '⚡ Bulk Operations', METS_TEXT_DOMAIN ),
+			__( 'Bulk Operations', METS_TEXT_DOMAIN ),
 			'manage_tickets',
 			'mets-bulk-operations',
 			array( $this, 'display_bulk_operations_page' )
 		);
 
+		// ─── Knowledge Base ─── separator
+		add_submenu_page(
+			'mets-tickets',
+			'',
+			'<span class="mets-menu-separator">Knowledge Base</span>',
+			'manage_tickets',
+			'mets-separator-kb',
+			'__return_false'
+		);
+
 		// ==============================================
-		// 3. KNOWLEDGE BASE (Primary)
+		// 3. KNOWLEDGE BASE
 		// ==============================================
+		$kb_label = __( 'Knowledge Base', METS_TEXT_DOMAIN );
+		if ( $badges['pending_reviews'] > 0 ) {
+			$kb_label .= ' <span class="awaiting-mod count-' . $badges['pending_reviews'] . '"><span class="pending-count">' . $badges['pending_reviews'] . '</span></span>';
+		}
 		add_submenu_page(
 			'mets-tickets',
 			__( 'Knowledge Base', METS_TEXT_DOMAIN ),
-			__( '📚 Knowledge Base', METS_TEXT_DOMAIN ),
+			$kb_label,
 			'manage_tickets',
 			'mets-kb-articles',
 			array( $this, 'display_kb_articles_page' )
 		);
 
+		// Add Article — hidden from menu, accessible via direct URL
 		add_submenu_page(
 			'mets-tickets',
 			__( 'Add New Article', METS_TEXT_DOMAIN ),
-			__( '📝 Add Article', METS_TEXT_DOMAIN ),
+			__( 'Add Article', METS_TEXT_DOMAIN ),
 			'manage_tickets',
 			'mets-kb-add-article',
 			array( $this, 'display_kb_add_article_page' )
 		);
+		remove_submenu_page( 'mets-tickets', 'mets-kb-add-article' );
 
-		// Pending Review (only for users who can review)
+		// Pending Review — hidden from menu (badge on KB item + filter on KB page)
 		if ( current_user_can( 'review_kb_articles' ) || current_user_can( 'manage_tickets' ) ) {
 			add_submenu_page(
 				'mets-tickets',
 				__( 'KB Pending Review', METS_TEXT_DOMAIN ),
-				__( '⏳ Pending Review', METS_TEXT_DOMAIN ),
+				__( 'Pending Review', METS_TEXT_DOMAIN ),
 				'manage_tickets',
 				'mets-kb-pending-review',
 				array( $this, 'display_kb_pending_review_page' )
 			);
+			remove_submenu_page( 'mets-tickets', 'mets-kb-pending-review' );
 		}
 
+		// KB Taxonomy (merged Categories + Tags)
+		add_submenu_page(
+			'mets-tickets',
+			__( 'KB Taxonomy', METS_TEXT_DOMAIN ),
+			__( 'KB Taxonomy', METS_TEXT_DOMAIN ),
+			'manage_tickets',
+			'mets-kb-taxonomy',
+			array( $this, 'display_kb_taxonomy_page' )
+		);
+
+		// Old KB Categories/Tags pages — hidden, for backwards compatibility
 		add_submenu_page(
 			'mets-tickets',
 			__( 'KB Categories', METS_TEXT_DOMAIN ),
-			__( '📂 KB Categories', METS_TEXT_DOMAIN ),
+			__( 'KB Categories', METS_TEXT_DOMAIN ),
 			'manage_tickets',
 			'mets-kb-categories',
 			array( $this, 'display_kb_categories_page' )
 		);
+		remove_submenu_page( 'mets-tickets', 'mets-kb-categories' );
 
 		add_submenu_page(
 			'mets-tickets',
 			__( 'KB Tags', METS_TEXT_DOMAIN ),
-			__( '🏷️ KB Tags', METS_TEXT_DOMAIN ),
+			__( 'KB Tags', METS_TEXT_DOMAIN ),
 			'manage_tickets',
 			'mets-kb-tags',
 			array( $this, 'display_kb_tags_page' )
 		);
+		remove_submenu_page( 'mets-tickets', 'mets-kb-tags' );
+
+		// ─── Management ─── separator (manager+ only)
+		if ( current_user_can( 'manage_agents' ) || current_user_can( 'manage_tickets' ) ) {
+			add_submenu_page(
+				'mets-tickets',
+				'',
+				'<span class="mets-menu-separator">Management</span>',
+				'manage_agents',
+				'mets-separator-mgmt',
+				'__return_false'
+			);
+		}
 
 		// ==============================================
-		// 4. TEAM MANAGEMENT (Primary for Managers)
+		// 4. TEAM MANAGEMENT (Managers)
 		// ==============================================
 		if ( current_user_can( 'manage_agents' ) || current_user_can( 'manage_tickets' ) ) {
 			add_submenu_page(
 				'mets-tickets',
 				__( 'Agents', METS_TEXT_DOMAIN ),
-				__( '👥 Agents', METS_TEXT_DOMAIN ),
+				__( 'Agents', METS_TEXT_DOMAIN ),
 				'manage_agents',
 				'mets-agents',
 				array( $this, 'display_agents_page' )
@@ -320,7 +383,7 @@ class METS_Admin {
 			add_submenu_page(
 				'mets-tickets',
 				__( 'Team Performance', METS_TEXT_DOMAIN ),
-				__( '📊 Team Performance', METS_TEXT_DOMAIN ),
+				__( 'Team Performance', METS_TEXT_DOMAIN ),
 				'manage_agents',
 				'mets-manager-dashboard',
 				array( $this, 'display_manager_dashboard_page' )
@@ -328,103 +391,131 @@ class METS_Admin {
 		}
 
 		// ==============================================
-		// 5. ENTITIES (Primary for Admins)
+		// 5. ENTITIES (Admins)
 		// ==============================================
 		if ( current_user_can( 'manage_entities' ) ) {
 			add_submenu_page(
 				'mets-tickets',
 				__( 'All Entities', METS_TEXT_DOMAIN ),
-				__( '🏢 Entities', METS_TEXT_DOMAIN ),
+				__( 'Entities', METS_TEXT_DOMAIN ),
 				'manage_entities',
 				'mets-entities',
 				array( $this, 'display_entities_page' )
 			);
 		}
 
+		// ─── Analytics ─── separator
+		if ( current_user_can( 'view_reports' ) || current_user_can( 'manage_tickets' ) ) {
+			add_submenu_page(
+				'mets-tickets',
+				'',
+				'<span class="mets-menu-separator">Analytics</span>',
+				'view_reports',
+				'mets-separator-analytics',
+				'__return_false'
+			);
+		}
+
 		// ==============================================
-		// 6. REPORTS & ANALYTICS (Secondary)
+		// 6. REPORTS & ANALYTICS
 		// ==============================================
 		if ( current_user_can( 'view_reports' ) || current_user_can( 'manage_tickets' ) ) {
 			add_submenu_page(
 				'mets-tickets',
+				__( 'Reports', METS_TEXT_DOMAIN ),
+				__( 'Reports', METS_TEXT_DOMAIN ),
+				'view_reports',
+				'mets-reports',
+				array( $this, 'display_reports_hub_page' )
+			);
+
+			// Old report slugs — hidden, redirect to tabs
+			add_submenu_page(
+				'mets-tickets',
 				__( 'Ticket Reports', METS_TEXT_DOMAIN ),
-				__( '📈 Reports', METS_TEXT_DOMAIN ),
+				__( 'Reports Overview', METS_TEXT_DOMAIN ),
 				'view_reports',
 				'mets-reporting-dashboard',
 				array( $this, 'display_reporting_dashboard_page' )
 			);
+			remove_submenu_page( 'mets-tickets', 'mets-reporting-dashboard' );
 
 			add_submenu_page(
 				'mets-tickets',
 				__( 'Custom Reports', METS_TEXT_DOMAIN ),
-				__( '📋 Custom Reports', METS_TEXT_DOMAIN ),
+				__( 'Custom Reports', METS_TEXT_DOMAIN ),
 				'view_reports',
 				'mets-custom-reports',
 				array( $this, 'display_custom_reports_page' )
 			);
+			remove_submenu_page( 'mets-tickets', 'mets-custom-reports' );
 
-			// KB Analytics (only for users who can view analytics)
 			if ( current_user_can( 'view_kb_analytics' ) || current_user_can( 'manage_tickets' ) ) {
 				add_submenu_page(
 					'mets-tickets',
 					__( 'KB Analytics', METS_TEXT_DOMAIN ),
-					__( '📊 KB Analytics', METS_TEXT_DOMAIN ),
+					__( 'KB Analytics', METS_TEXT_DOMAIN ),
 					'view_reports',
 					'mets-kb-analytics',
 					array( $this, 'display_kb_analytics_page' )
 				);
+				remove_submenu_page( 'mets-tickets', 'mets-kb-analytics' );
 			}
 
-			// Performance Dashboard (admin only)
 			if ( current_user_can( 'manage_options' ) ) {
 				add_submenu_page(
 					'mets-tickets',
 					__( 'Performance Analytics', METS_TEXT_DOMAIN ),
-					__( '⚡ Performance', METS_TEXT_DOMAIN ),
+					__( 'Performance', METS_TEXT_DOMAIN ),
 					'manage_options',
 					'mets-performance-dashboard',
 					array( $this, 'display_performance_dashboard_page' )
 				);
+				remove_submenu_page( 'mets-tickets', 'mets-performance-dashboard' );
 			}
 		}
 
 		// ==============================================
-		// 7. SETTINGS (Bottom - Admin Only)
+		// 7. SETTINGS (Admin Only)
 		// ==============================================
 		if ( current_user_can( 'manage_ticket_system' ) ) {
 			add_submenu_page(
 				'mets-tickets',
 				__( 'General Settings', METS_TEXT_DOMAIN ),
-				__( '⚙️ Settings', METS_TEXT_DOMAIN ),
+				__( 'Settings', METS_TEXT_DOMAIN ),
 				'manage_ticket_system',
 				'mets-settings',
 				array( $this->settings_handler, 'display_settings_page' )
 			);
 
+			// SLA Rules — hidden from menu, now a tab in Settings
 			add_submenu_page(
 				'mets-tickets',
 				__( 'SLA Configuration', METS_TEXT_DOMAIN ),
-				__( '⏱️ SLA Config', METS_TEXT_DOMAIN ),
+				__( 'SLA Config', METS_TEXT_DOMAIN ),
 				'manage_ticket_system',
 				'mets-sla-rules',
 				array( $this, 'display_sla_rules_page' )
 			);
+			remove_submenu_page( 'mets-tickets', 'mets-sla-rules' );
 
+			// Business Hours — hidden from menu, now a tab in Settings
 			add_submenu_page(
 				'mets-tickets',
 				__( 'Business Hours', METS_TEXT_DOMAIN ),
-				__( '🕒 Business Hours', METS_TEXT_DOMAIN ),
+				__( 'Business Hours', METS_TEXT_DOMAIN ),
 				'manage_ticket_system',
 				'mets-business-hours',
 				array( $this, 'display_business_hours_page' )
 			);
+			remove_submenu_page( 'mets-tickets', 'mets-business-hours' );
 
 			// WooCommerce Integration (only if WooCommerce is active)
 			if ( class_exists( 'WooCommerce' ) ) {
 				add_submenu_page(
 					'mets-tickets',
 					__( 'WooCommerce Integration', METS_TEXT_DOMAIN ),
-					__( '🛒 WooCommerce', METS_TEXT_DOMAIN ),
+					__( 'WooCommerce', METS_TEXT_DOMAIN ),
 					'manage_ticket_system',
 					'mets-woocommerce',
 					array( $this->settings_handler, 'display_woocommerce_settings_page' )
@@ -436,13 +527,189 @@ class METS_Admin {
 				add_submenu_page(
 					'mets-tickets',
 					__( 'Security Dashboard', METS_TEXT_DOMAIN ),
-					__( '🔒 Security', METS_TEXT_DOMAIN ),
+					__( 'Security', METS_TEXT_DOMAIN ),
 					'manage_options',
 					'mets-security-dashboard',
 					array( $this, 'display_security_dashboard_page' )
 				);
 			}
 		}
+	}
+
+	/**
+	 * Style admin menu separators and badge items.
+	 *
+	 * Adds CSS classes to separator <li> elements and hides their click behavior.
+	 *
+	 * @since 1.2.0
+	 */
+	public function admin_menu_separator_styles() {
+		?>
+		<style>
+			/* Menu separators */
+			#adminmenu .wp-submenu li a .mets-menu-separator {
+				display: block;
+				color: #a7aaad;
+				font-size: 10px;
+				font-weight: 600;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				padding: 6px 0 2px;
+				border-top: 1px solid #404040;
+				margin-top: 4px;
+				cursor: default;
+				pointer-events: none;
+			}
+			#adminmenu .wp-submenu li a[href*="mets-separator-"] {
+				pointer-events: none;
+				cursor: default;
+				padding-top: 0;
+				padding-bottom: 0;
+				min-height: auto;
+			}
+			#adminmenu .wp-submenu li a[href*="mets-separator-"]:hover {
+				background: transparent;
+				color: inherit;
+			}
+		</style>
+		<?php
+	}
+
+	/**
+	 * Get badge counts for admin menu items.
+	 *
+	 * Uses transient cache for performance (5 minute TTL).
+	 *
+	 * @since  1.2.0
+	 * @return array Badge counts: unassigned, sla_breaches, pending_reviews
+	 */
+	public function get_menu_badge_counts() {
+		$cached = get_transient( 'mets_menu_badge_counts' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$counts = array(
+			'unassigned'      => 0,
+			'sla_breaches'    => 0,
+			'pending_reviews' => 0,
+		);
+
+		try {
+			// Unassigned tickets
+			require_once METS_PLUGIN_PATH . 'includes/models/class-mets-ticket-model.php';
+			$ticket_model = new METS_Ticket_Model();
+			$counts['unassigned'] = (int) $ticket_model->get_count( array(
+				'assigned_to' => 'unassigned',
+				'status'      => array( 'new', 'open' ),
+			) );
+		} catch ( \Throwable $e ) {
+			// Model not available yet
+		}
+
+		try {
+			// SLA breaches
+			require_once METS_PLUGIN_PATH . 'includes/models/class-mets-sla-rule-model.php';
+			require_once METS_PLUGIN_PATH . 'includes/models/class-mets-business-hours-model.php';
+			require_once METS_PLUGIN_PATH . 'includes/class-mets-sla-calculator.php';
+			$sla_calculator = new METS_SLA_Calculator();
+			$breached = $sla_calculator->get_breached_tickets();
+			$counts['sla_breaches'] = is_array( $breached ) ? count( $breached ) : 0;
+		} catch ( \Throwable $e ) {
+			// SLA calculator not available yet
+		}
+
+		try {
+			// Pending KB reviews
+			global $wpdb;
+			$kb_table = $wpdb->prefix . 'mets_kb_articles';
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $kb_table ) ) === $kb_table ) {
+				$counts['pending_reviews'] = (int) $wpdb->get_var(
+					"SELECT COUNT(*) FROM {$kb_table} WHERE status = 'pending_review'"
+				);
+			}
+		} catch ( \Throwable $e ) {
+			// KB table not available yet
+		}
+
+		set_transient( 'mets_menu_badge_counts', $counts, 5 * MINUTE_IN_SECONDS );
+
+		return $counts;
+	}
+
+	/**
+	 * Invalidate menu badge count cache.
+	 *
+	 * Should be called whenever ticket/KB state changes.
+	 *
+	 * @since 1.2.0
+	 */
+	public static function invalidate_badge_cache() {
+		delete_transient( 'mets_menu_badge_counts' );
+	}
+
+	/**
+	 * Render breadcrumbs HTML string (does not echo).
+	 *
+	 * @since  1.2.0
+	 * @param  array $crumbs Array of ['label' => string, 'url' => string (optional)].
+	 * @return string HTML
+	 */
+	private function render_breadcrumbs( $crumbs ) {
+		if ( empty( $crumbs ) ) {
+			return '';
+		}
+
+		$html = '<nav class="mets-breadcrumbs" aria-label="' . esc_attr__( 'Breadcrumb', METS_TEXT_DOMAIN ) . '">';
+		$parts = array();
+		foreach ( $crumbs as $crumb ) {
+			if ( ! empty( $crumb['url'] ) ) {
+				$parts[] = '<a href="' . esc_url( $crumb['url'] ) . '">' . esc_html( $crumb['label'] ) . '</a>';
+			} else {
+				$parts[] = '<span aria-current="page">' . esc_html( $crumb['label'] ) . '</span>';
+			}
+		}
+		$html .= implode( ' <span class="mets-breadcrumb-sep">&rsaquo;</span> ', $parts );
+		$html .= '</nav>';
+
+		return $html;
+	}
+
+	/**
+	 * Redirect legacy menu slugs to their new merged locations.
+	 *
+	 * Old bookmarked URLs continue to work by redirecting to the merged page tab.
+	 *
+	 * @since 1.2.0
+	 */
+	private function maybe_redirect_legacy_slugs() {
+		if ( ! isset( $_GET['page'] ) || $_SERVER['REQUEST_METHOD'] !== 'GET' ) {
+			return;
+		}
+
+		$page = sanitize_text_field( $_GET['page'] );
+		$redirects = array(
+			'mets-reporting-dashboard'   => array( 'page' => 'mets-reports', 'tab' => 'overview' ),
+			'mets-custom-reports'        => array( 'page' => 'mets-reports', 'tab' => 'custom' ),
+			'mets-kb-analytics'          => array( 'page' => 'mets-reports', 'tab' => 'kb_analytics' ),
+			'mets-performance-dashboard' => array( 'page' => 'mets-reports', 'tab' => 'performance' ),
+			'mets-sla-rules'             => array( 'page' => 'mets-settings', 'tab' => 'sla_rules' ),
+			'mets-business-hours'        => array( 'page' => 'mets-settings', 'tab' => 'business_hours' ),
+			'mets-kb-categories'         => array( 'page' => 'mets-kb-taxonomy', 'tab' => 'categories' ),
+			'mets-kb-tags'               => array( 'page' => 'mets-kb-taxonomy', 'tab' => 'tags' ),
+		);
+
+		if ( ! isset( $redirects[ $page ] ) || ! empty( $_GET['action'] ) ) {
+			return;
+		}
+
+		// Build redirect URL preserving extra query params (period, entity_id, etc.)
+		$extra_params = $_GET;
+		unset( $extra_params['page'] );
+		$target = array_merge( $redirects[ $page ], $extra_params );
+
+		wp_safe_redirect( add_query_arg( $target, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/**
@@ -461,6 +728,9 @@ class METS_Admin {
 		register_setting( 'mets_settings', 'mets_smtp_settings' );
 		register_setting( 'mets_settings', 'mets_n8n_chat_settings' );
 		
+		// Redirect old report/settings slugs to new merged pages
+		$this->maybe_redirect_legacy_slugs();
+
 		// Handle form submissions early
 		if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 			// Check page parameter in both GET and POST
@@ -469,17 +739,20 @@ class METS_Admin {
 			if ( $page === 'mets-entities' ) {
 				$this->handle_entity_form_submission();
 			} elseif ( $page === 'mets-tickets' || $page === 'mets-add-ticket' ) {
+				self::invalidate_badge_cache();
 				$this->handle_ticket_form_submission();
-			} elseif ( $page === 'mets-sla-rules' ) {
+			} elseif ( $page === 'mets-sla-rules' || ( $page === 'mets-settings' && isset( $_GET['tab'] ) && $_GET['tab'] === 'sla_rules' ) ) {
 				$this->handle_sla_rules_form_submission();
-			} elseif ( $page === 'mets-business-hours' ) {
+			} elseif ( $page === 'mets-business-hours' || ( $page === 'mets-settings' && isset( $_GET['tab'] ) && $_GET['tab'] === 'business_hours' ) ) {
 				$this->handle_business_hours_form_submission();
 			} elseif ( $page === 'mets-kb-add-article' && isset( $_POST['save_article'] ) ) {
+				self::invalidate_badge_cache();
 				$this->handle_kb_article_form_submission();
 			}
 		} elseif ( isset( $_GET['page'] ) && $_GET['page'] === 'mets-entities' && isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['entity_id'] ) ) {
 			$this->handle_entity_deletion();
 		} elseif ( isset( $_GET['page'] ) && $_GET['page'] === 'mets-tickets' && isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['ticket_id'] ) ) {
+			self::invalidate_badge_cache();
 			$this->handle_ticket_deletion();
 		} elseif ( isset( $_GET['page'] ) && $_GET['page'] === 'mets-sla-rules' && isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['rule_id'] ) ) {
 			$this->handle_sla_rule_deletion();
@@ -1062,7 +1335,20 @@ class METS_Admin {
 	private function display_edit_ticket_page( $ticket_id ) {
 		require_once METS_PLUGIN_PATH . 'admin/tickets/class-mets-ticket-manager.php';
 		$ticket_manager = new METS_Ticket_Manager();
+
+		// Inject breadcrumbs after the <h1>
+		ob_start();
 		$ticket_manager->display_edit_page( $ticket_id );
+		$content = ob_get_clean();
+
+		$breadcrumb = $this->render_breadcrumbs( array(
+			array( 'label' => __( 'All Tickets', METS_TEXT_DOMAIN ), 'url' => admin_url( 'admin.php?page=mets-all-tickets' ) ),
+			array( 'label' => sprintf( __( 'Ticket #%s', METS_TEXT_DOMAIN ), $ticket_id ) ),
+		) );
+
+		// Insert breadcrumbs after first </h1>
+		$content = preg_replace( '/(<\/h1>)/s', '$1' . $breadcrumb, $content, 1 );
+		echo $content;
 	}
 
 	/**
@@ -1223,7 +1509,24 @@ class METS_Admin {
 		// Include entities management
 		require_once METS_PLUGIN_PATH . 'admin/entities/class-mets-entity-manager.php';
 		$entity_manager = new METS_Entity_Manager();
-		$entity_manager->display_page();
+
+		// Inject breadcrumbs on edit view
+		$action = isset( $_GET['action'] ) ? sanitize_text_field( $_GET['action'] ) : '';
+		if ( $action === 'edit' && ! empty( $_GET['entity_id'] ) ) {
+			ob_start();
+			$entity_manager->display_page();
+			$content = ob_get_clean();
+
+			$breadcrumb = $this->render_breadcrumbs( array(
+				array( 'label' => __( 'Entities', METS_TEXT_DOMAIN ), 'url' => admin_url( 'admin.php?page=mets-entities' ) ),
+				array( 'label' => __( 'Edit Entity', METS_TEXT_DOMAIN ) ),
+			) );
+
+			$content = preg_replace( '/(<\/h1>)/s', '$1' . $breadcrumb, $content, 1 );
+			echo $content;
+		} else {
+			$entity_manager->display_page();
+		}
 	}
 
 	/**
@@ -1324,19 +1627,34 @@ class METS_Admin {
 	 * @since    1.0.0
 	 */
 	public function display_sla_rules_page() {
-		$action = isset( $_GET['action'] ) ? $_GET['action'] : 'list';
+		$action = isset( $_GET['action'] ) ? sanitize_text_field( $_GET['action'] ) : 'list';
 		$rule_id = isset( $_GET['rule_id'] ) ? intval( $_GET['rule_id'] ) : 0;
 
-		switch ( $action ) {
-			case 'add':
+		// Inject breadcrumbs for add/edit sub-views
+		if ( $action === 'add' || $action === 'edit' ) {
+			$sla_back_url = admin_url( 'admin.php?page=mets-settings&tab=sla_rules' );
+			$crumb_label = $action === 'add'
+				? __( 'Add Rule', METS_TEXT_DOMAIN )
+				: __( 'Edit Rule', METS_TEXT_DOMAIN );
+
+			ob_start();
+			if ( $action === 'add' ) {
 				$this->display_add_sla_rule_form();
-				break;
-			case 'edit':
+			} else {
 				$this->display_edit_sla_rule_form( $rule_id );
-				break;
-			default:
-				$this->display_sla_rules_list();
-				break;
+			}
+			$content = ob_get_clean();
+
+			$breadcrumb = $this->render_breadcrumbs( array(
+				array( 'label' => __( 'Settings', METS_TEXT_DOMAIN ), 'url' => admin_url( 'admin.php?page=mets-settings' ) ),
+				array( 'label' => __( 'SLA Rules', METS_TEXT_DOMAIN ), 'url' => $sla_back_url ),
+				array( 'label' => $crumb_label ),
+			) );
+
+			$content = preg_replace( '/(<\/h1>)/s', '$1' . $breadcrumb, $content, 1 );
+			echo $content;
+		} else {
+			$this->display_sla_rules_list();
 		}
 	}
 
@@ -3491,12 +3809,15 @@ class METS_Admin {
 				break;
 		}
 		
+		// Invalidate badge cache when KB review status changes
+		self::invalidate_badge_cache();
+
 		// Show admin notice
 		set_transient( 'mets_admin_notice', array(
 			'message' => $result ? $message : __( 'Action failed. Please try again.', METS_TEXT_DOMAIN ),
 			'type' => $result ? 'success' : 'error'
 		), 45 );
-		
+
 		// Redirect to avoid resubmission
 		wp_redirect( admin_url( 'admin.php?page=mets-kb-pending-review' ) );
 		exit;
@@ -3559,6 +3880,54 @@ class METS_Admin {
 		if ( $subject && $message ) {
 			wp_mail( $author->user_email, $subject, $message );
 		}
+	}
+
+	/**
+	 * Display KB Taxonomy page — merged view for Categories + Tags with tabs.
+	 *
+	 * @since 1.2.0
+	 */
+	public function display_kb_taxonomy_page() {
+		if ( ! current_user_can( 'manage_tickets' ) ) {
+			wp_die( __( 'You do not have sufficient permissions to access this page.', METS_TEXT_DOMAIN ) );
+		}
+
+		$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'categories';
+		?>
+		<div class="wrap">
+			<h1><?php _e( 'KB Taxonomy', METS_TEXT_DOMAIN ); ?></h1>
+
+			<nav class="nav-tab-wrapper">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-kb-taxonomy&tab=categories' ) ); ?>"
+				   class="nav-tab <?php echo $current_tab === 'categories' ? 'nav-tab-active' : ''; ?>">
+					<?php _e( 'Categories', METS_TEXT_DOMAIN ); ?>
+				</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-kb-taxonomy&tab=tags' ) ); ?>"
+				   class="nav-tab <?php echo $current_tab === 'tags' ? 'nav-tab-active' : ''; ?>">
+					<?php _e( 'Tags', METS_TEXT_DOMAIN ); ?>
+				</a>
+			</nav>
+
+			<div class="tab-content" style="margin-top: 20px;">
+				<?php
+				// Capture inner page output and strip outer wrap/h1
+				ob_start();
+				if ( $current_tab === 'tags' ) {
+					$this->display_kb_tags_page();
+				} else {
+					$this->display_kb_categories_page();
+				}
+				$content = ob_get_clean();
+
+				// Strip outer <div class="wrap">...</div> wrapper and <h1>
+				$content = preg_replace( '/^\s*<div class="wrap">\s*/s', '', $content );
+				$content = preg_replace( '/\s*<\/div>\s*$/s', '', $content );
+				$content = preg_replace( '/<h1[^>]*>.*?<\/h1>/s', '', $content, 1 );
+				echo $content;
+				?>
+			</div>
+		</div>
+		<?php
 	}
 
 	public function display_kb_categories_page() {
@@ -4804,6 +5173,99 @@ class METS_Admin {
 	}
 
 	/**
+	 * Display Reports hub page — merged view with tabs.
+	 *
+	 * Tabs: Overview | Custom | KB Analytics | Performance
+	 *
+	 * @since 1.2.0
+	 */
+	public function display_reports_hub_page() {
+		if ( ! current_user_can( 'view_reports' ) && ! current_user_can( 'manage_tickets' ) ) {
+			wp_die( __( 'You do not have sufficient permissions to access this page.', METS_TEXT_DOMAIN ) );
+		}
+
+		$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'overview';
+
+		// Build tabs array with capability checks
+		$tabs = array(
+			'overview' => __( 'Overview', METS_TEXT_DOMAIN ),
+			'custom'   => __( 'Custom Reports', METS_TEXT_DOMAIN ),
+		);
+		if ( current_user_can( 'view_kb_analytics' ) || current_user_can( 'manage_tickets' ) ) {
+			$tabs['kb_analytics'] = __( 'KB Analytics', METS_TEXT_DOMAIN );
+		}
+		if ( current_user_can( 'manage_options' ) ) {
+			$tabs['performance'] = __( 'Performance', METS_TEXT_DOMAIN );
+		}
+
+		// Default to first available tab if current is not accessible
+		if ( ! isset( $tabs[ $current_tab ] ) ) {
+			$current_tab = 'overview';
+		}
+
+		?>
+		<div class="wrap">
+			<h1><?php _e( 'Reports', METS_TEXT_DOMAIN ); ?></h1>
+
+			<nav class="nav-tab-wrapper">
+				<?php foreach ( $tabs as $tab_key => $tab_label ) : ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-reports&tab=' . $tab_key ) ); ?>"
+					   class="nav-tab <?php echo $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>">
+						<?php echo esc_html( $tab_label ); ?>
+					</a>
+				<?php endforeach; ?>
+			</nav>
+
+			<div class="tab-content" style="margin-top: 20px;">
+				<?php
+				ob_start();
+				switch ( $current_tab ) {
+					case 'custom':
+						$this->display_custom_reports_page();
+						break;
+					case 'kb_analytics':
+						$this->display_kb_analytics_page();
+						break;
+					case 'performance':
+						$this->display_performance_dashboard_page();
+						break;
+					case 'overview':
+					default:
+						$this->display_reporting_dashboard_page();
+						break;
+				}
+				$content = ob_get_clean();
+
+				// Strip outer <div class="wrap"> and <h1> from embedded page
+				$content = preg_replace( '/^\s*<div class="wrap">\s*/s', '', $content );
+				$content = preg_replace( '/\s*<\/div>\s*$/s', '', $content );
+				$content = preg_replace( '/<h1[^>]*>.*?<\/h1>/s', '', $content, 1 );
+
+				// Fix hidden page fields to use new slug and inject tab field
+				$old_page_fields = array(
+					'name="page" value="mets-reporting-dashboard"',
+					'name="page" value="mets-custom-reports"',
+					'name="page" value="mets-kb-analytics"',
+					'name="page" value="mets-performance-dashboard"',
+				);
+				$new_page_field = 'name="page" value="mets-reports"';
+				$content = str_replace( $old_page_fields, $new_page_field, $content );
+
+				// Inject tab hidden field after the page hidden field
+				$content = str_replace(
+					$new_page_field . '>',
+					$new_page_field . '><input type="hidden" name="tab" value="' . esc_attr( $current_tab ) . '">',
+					$content
+				);
+
+				echo $content;
+				?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Handle report export requests
 	 *
 	 * @since    1.0.0
@@ -5327,20 +5789,27 @@ class METS_Admin {
 		$current_tags = $is_edit ? $tag_model->get_article_tags( $article_id ) : array();
 		$popular_tags = $tag_model->get_popular_tags( 20 );
 
+		$article_label = $is_edit && $article
+			? esc_html( $article->title )
+			: __( 'New Article', METS_TEXT_DOMAIN );
 		?>
 		<div class="wrap">
 			<h1><?php echo $is_edit ? __( 'Edit Article', METS_TEXT_DOMAIN ) : __( 'Add New Article', METS_TEXT_DOMAIN ); ?></h1>
-			
+			<?php echo $this->render_breadcrumbs( array(
+				array( 'label' => __( 'Knowledge Base', METS_TEXT_DOMAIN ), 'url' => admin_url( 'admin.php?page=mets-kb-articles' ) ),
+				array( 'label' => $article_label ),
+			) ); ?>
+
 			<form method="post" id="kb-article-form" enctype="multipart/form-data">
 				<?php wp_nonce_field( 'mets_kb_save_article', 'mets_kb_nonce' ); ?>
-				
+
 				<div id="poststuff">
 					<div id="post-body" class="metabox-holder columns-2">
 						<div id="post-body-content">
 							<!-- Title -->
 							<div id="titlediv">
 								<div id="titlewrap">
-									<input type="text" name="title" id="title" 
+									<input type="text" name="title" id="title"
 										   value="<?php echo $article ? esc_attr( $article->title ) : ''; ?>" 
 										   placeholder="<?php esc_attr_e( 'Enter article title', METS_TEXT_DOMAIN ); ?>"
 										   autocomplete="off" required>
