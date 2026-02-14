@@ -3573,11 +3573,11 @@ class METS_Admin {
 			$this->handle_category_actions();
 		}
 
-		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-kb-article-model.php';
-		$article_model = new METS_KB_Article_Model();
-		
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-kb-category-model.php';
+		$category_model = new METS_KB_Category_Model();
+
 		// Get all categories
-		$categories = $article_model->get_all_categories();
+		$categories = $category_model->get_all();
 		
 		?>
 		<div class="wrap">
@@ -3682,7 +3682,7 @@ class METS_Admin {
 											</td>
 										</tr>
 									<?php else : ?>
-										<?php $this->display_category_rows( $categories, $article_model ); ?>
+										<?php $this->display_category_rows( $categories, $category_model ); ?>
 									<?php endif; ?>
 								</tbody>
 							</table>
@@ -3854,15 +3854,15 @@ class METS_Admin {
 	 * Display category rows in hierarchical order
 	 *
 	 * @since    1.0.0
-	 * @param    array    $categories      Categories array
-	 * @param    object   $article_model   Article model instance
+	 * @param    array    $categories       Categories array
+	 * @param    object   $category_model  Category model instance
 	 * @param    int      $parent_id       Parent ID for recursion
 	 * @param    int      $level           Nesting level
 	 */
-	private function display_category_rows( $categories, $article_model, $parent_id = 0, $level = 0 ) {
+	private function display_category_rows( $categories, $category_model, $parent_id = 0, $level = 0 ) {
 		foreach ( $categories as $category ) {
 			if ( $category->parent_id == $parent_id ) {
-				$article_count = $article_model->count_articles_by_category( $category->id );
+				$article_count = isset( $category->article_count ) ? (int) $category->article_count : 0;
 				$indent = str_repeat( '— ', $level );
 				
 				echo '<tr id="category-' . esc_attr( $category->id ) . '">';
@@ -3908,7 +3908,7 @@ class METS_Admin {
 				echo '</tr>';
 				
 				// Recursively display child categories
-				$this->display_category_rows( $categories, $article_model, $category->id, $level + 1 );
+				$this->display_category_rows( $categories, $category_model, $category->id, $level + 1 );
 			}
 		}
 	}
@@ -3921,24 +3921,24 @@ class METS_Admin {
 	private function handle_category_actions() {
 		$action = sanitize_text_field( $_POST['action'] );
 		
-		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-kb-article-model.php';
-		$article_model = new METS_KB_Article_Model();
-		
+		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-kb-category-model.php';
+		$category_model = new METS_KB_Category_Model();
+
 		switch ( $action ) {
 			case 'add_category':
-				$this->handle_add_category( $article_model );
+				$this->handle_add_category( $category_model );
 				break;
-				
+
 			case 'edit_category':
-				$this->handle_edit_category( $article_model );
+				$this->handle_edit_category( $category_model );
 				break;
-				
+
 			case 'delete_category':
-				$this->handle_delete_category( $article_model );
+				$this->handle_delete_category( $category_model );
 				break;
-				
+
 			case 'bulk_action':
-				$this->handle_bulk_category_actions( $article_model );
+				$this->handle_bulk_category_actions( $category_model );
 				break;
 		}
 	}
@@ -3947,9 +3947,9 @@ class METS_Admin {
 	 * Handle add category
 	 *
 	 * @since    1.0.0
-	 * @param    object   $article_model   Article model instance
+	 * @param    object   $category_model   Category model instance
 	 */
-	private function handle_add_category( $article_model ) {
+	private function handle_add_category( $category_model ) {
 		$name = sanitize_text_field( $_POST['name'] );
 		$slug = sanitize_title( $_POST['slug'] ?: $name );
 		$parent_id = intval( $_POST['parent_id'] );
@@ -3974,8 +3974,8 @@ class METS_Admin {
 			'icon' => $icon
 		);
 		
-		$result = $article_model->create_category( $category_data );
-		
+		$result = $category_model->create( $category_data );
+
 		if ( $result ) {
 			set_transient( 'mets_admin_notice', array(
 				'message' => __( 'Category created successfully.', METS_TEXT_DOMAIN ),
@@ -3993,9 +3993,9 @@ class METS_Admin {
 	 * Handle edit category
 	 *
 	 * @since    1.0.0
-	 * @param    object   $article_model   Article model instance
+	 * @param    object   $category_model   Category model instance
 	 */
-	private function handle_edit_category( $article_model ) {
+	private function handle_edit_category( $category_model ) {
 		$category_id = intval( $_POST['category_id'] );
 		$name = sanitize_text_field( $_POST['name'] );
 		$slug = sanitize_title( $_POST['slug'] ?: $name );
@@ -4030,7 +4030,7 @@ class METS_Admin {
 			'icon' => $icon
 		);
 		
-		$result = $article_model->update_category( $category_id, $category_data );
+		$result = $category_model->update( $category_id, $category_data );
 		
 		if ( $result ) {
 			set_transient( 'mets_admin_notice', array(
@@ -4049,11 +4049,11 @@ class METS_Admin {
 	 * Handle delete category
 	 *
 	 * @since    1.0.0
-	 * @param    object   $article_model   Article model instance
+	 * @param    object   $category_model   Category model instance
 	 */
-	private function handle_delete_category( $article_model ) {
+	private function handle_delete_category( $category_model ) {
 		$category_id = intval( $_POST['category_id'] );
-		
+
 		if ( ! $category_id ) {
 			set_transient( 'mets_admin_notice', array(
 				'message' => __( 'Invalid category ID.', METS_TEXT_DOMAIN ),
@@ -4061,9 +4061,13 @@ class METS_Admin {
 			), 45 );
 			return;
 		}
-		
+
 		// Check if category has articles
-		$article_count = $article_model->count_articles_by_category( $category_id );
+		global $wpdb;
+		$article_count = (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}mets_kb_article_categories WHERE category_id = %d",
+			$category_id
+		) );
 		if ( $article_count > 0 ) {
 			set_transient( 'mets_admin_notice', array(
 				'message' => sprintf( __( 'Cannot delete category. It contains %d articles.', METS_TEXT_DOMAIN ), $article_count ),
@@ -4071,9 +4075,9 @@ class METS_Admin {
 			), 45 );
 			return;
 		}
-		
+
 		// Check if category has child categories
-		$child_categories = $article_model->get_categories_by_parent( $category_id );
+		$child_categories = $category_model->get_all( array( 'parent_id' => $category_id ) );
 		if ( ! empty( $child_categories ) ) {
 			set_transient( 'mets_admin_notice', array(
 				'message' => __( 'Cannot delete category. It has child categories.', METS_TEXT_DOMAIN ),
@@ -4081,8 +4085,8 @@ class METS_Admin {
 			), 45 );
 			return;
 		}
-		
-		$result = $article_model->delete_category( $category_id );
+
+		$result = $category_model->delete( $category_id );
 		
 		if ( $result ) {
 			set_transient( 'mets_admin_notice', array(
@@ -4101,32 +4105,36 @@ class METS_Admin {
 	 * Handle bulk category actions
 	 *
 	 * @since    1.0.0
-	 * @param    object   $article_model   Article model instance
+	 * @param    object   $category_model   Category model instance
 	 */
-	private function handle_bulk_category_actions( $article_model ) {
+	private function handle_bulk_category_actions( $category_model ) {
 		$bulk_action = sanitize_text_field( $_POST['bulk_action'] );
 		$category_ids = isset( $_POST['categories'] ) ? array_map( 'intval', $_POST['categories'] ) : array();
-		
+
 		if ( empty( $category_ids ) || $bulk_action === '-1' ) {
 			return;
 		}
-		
+
 		$success_count = 0;
 		$error_count = 0;
-		
+
 		switch ( $bulk_action ) {
 			case 'delete':
+				global $wpdb;
 				foreach ( $category_ids as $category_id ) {
 					// Check constraints before deleting
-					$article_count = $article_model->count_articles_by_category( $category_id );
-					$child_categories = $article_model->get_categories_by_parent( $category_id );
-					
+					$article_count = (int) $wpdb->get_var( $wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}mets_kb_article_categories WHERE category_id = %d",
+						$category_id
+					) );
+					$child_categories = $category_model->get_all( array( 'parent_id' => $category_id ) );
+
 					if ( $article_count > 0 || ! empty( $child_categories ) ) {
 						$error_count++;
 						continue;
 					}
-					
-					if ( $article_model->delete_category( $category_id ) ) {
+
+					if ( $category_model->delete( $category_id ) ) {
 						$success_count++;
 					} else {
 						$error_count++;
