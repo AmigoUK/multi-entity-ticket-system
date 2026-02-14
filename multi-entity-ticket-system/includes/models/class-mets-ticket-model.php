@@ -60,20 +60,26 @@ class METS_Ticket_Model {
 			$prefix = 'TKT';
 		}
 
-		$date_prefix = date( 'Y' ) . date( 'm' );
+		// Get current year and month
+		$year = date( 'Y' );
+		$month = date( 'm' );
+		$date_prefix = $year . $month;
 
-		// Acquire a named lock to prevent concurrent generation
-		$lock_name = 'mets_ticket_num_' . $entity_id;
-		$lock_acquired = $wpdb->get_var(
-			$wpdb->prepare( "SELECT GET_LOCK(%s, 5)", $lock_name )
-		);
+		// Acquire a named database lock to prevent race conditions (TOCTOU)
+		$lock_name = 'mets_ticket_number_' . $entity_id;
+		$lock_acquired = $wpdb->get_var( $wpdb->prepare(
+			"SELECT GET_LOCK(%s, 5)",
+			$lock_name
+		) );
 
 		if ( ! $lock_acquired ) {
-			// Lock timeout — fall back to timestamp-based ID
-			return sprintf( '%s-%s-%s', $prefix, $date_prefix, time() );
+			// Fallback: use timestamp-based unique identifier if lock cannot be acquired
+			$timestamp = time();
+			return sprintf( '%s-%s-%s', $prefix, $date_prefix, $timestamp );
 		}
 
 		try {
+			// Get the highest 4-digit sequence number for this entity and month
 			$max_sequence = $wpdb->get_var( $wpdb->prepare(
 				"SELECT MAX(CAST(SUBSTRING_INDEX(ticket_number, '-', -1) AS UNSIGNED))
 				FROM {$this->table_name}
@@ -86,11 +92,17 @@ class METS_Ticket_Model {
 			) );
 
 			$sequence = $max_sequence ? intval( $max_sequence ) + 1 : 1;
-			return sprintf( '%s-%s-%04d', $prefix, $date_prefix, $sequence );
+
+			// Format: PREFIX-YYYYMM-NNNN
+			$ticket_number = sprintf( '%s-%s-%04d', $prefix, $date_prefix, $sequence );
+
+			return $ticket_number;
 		} finally {
-			$wpdb->query(
-				$wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name )
-			);
+			// Always release the lock
+			$wpdb->query( $wpdb->prepare(
+				"SELECT RELEASE_LOCK(%s)",
+				$lock_name
+			) );
 		}
 	}
 

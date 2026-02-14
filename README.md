@@ -1,8 +1,8 @@
 # Multi-Entity Ticket System (METS)
 
-A comprehensive WordPress plugin for centralized customer service ticket management across multiple cooperative businesses with hierarchical entity structure.
+A WordPress plugin for centralized customer service ticket management across multiple cooperative businesses with hierarchical entity structure.
 
-## 🚀 Features
+## Features
 
 - **Multi-Entity Support**: Manage tickets across multiple businesses/departments
 - **Hierarchical Structure**: Support for complex organizational hierarchies
@@ -12,92 +12,78 @@ A comprehensive WordPress plugin for centralized customer service ticket managem
 - **Agent Management**: Role-based access control and agent assignment
 - **SMTP Integration**: Reliable email notifications with multiple provider support
 - **REST API**: Complete API for third-party integrations
-- **Performance Optimized**: Advanced caching and database optimization
-- **Security Hardened**: Enterprise-grade security implementation
+- **Shortcodes**: Public ticket forms, dashboards, and knowledge base views
 
-## 📋 Requirements
+## Requirements
 
 - WordPress 5.0 or higher
 - PHP 7.4 or higher
 - MySQL 5.6 or higher
 - WooCommerce 3.0+ (optional, for e-commerce integration)
 
-## 🔧 Installation
+## Installation
 
 1. Download the plugin from this repository
 2. Upload to your WordPress `wp-content/plugins` directory
 3. Activate the plugin through the WordPress admin panel
 4. Configure your entities and departments
-5. Set up SMTP for email notifications
+5. Set up SMTP for email notifications (see [SMTP Setup Guide](multi-entity-ticket-system/docs/SMTP_SETUP_GUIDE.md))
 6. Configure SLA rules and business hours
 
-## 🛡️ Security Status
+## What's New in v1.1.0
 
-**Security Score: 85/100** ✅
+### Security Hardening
+- Database-level race condition prevention using `GET_LOCK`/`RELEASE_LOCK`
+- Null pointer safety on `get_user_by()` calls
+- Capability checks added to all AJAX handlers
+- Standardized JSON responses via `wp_send_json_success`/`wp_send_json_error`
+- SQL field whitelisting in Knowledge Base model
+- User validation on ticket assignment (returns `WP_Error` on failure)
+- Strict type comparisons (`===`/`!==`) throughout
+- Debug `error_log` calls removed from production code
 
-All critical vulnerabilities have been addressed:
-- ✅ SQL Injection Protection
-- ✅ CSRF Protection  
-- ✅ File Upload Security
-- ✅ XSS Prevention
-- ✅ Rate Limiting
-- ✅ Input Validation
+### UX Improvements
+- AJAX wrapper with loading indicators, timeouts, and user-friendly error messages
+- Field-level form validation with ARIA attributes for accessibility
+- Focus-visible keyboard navigation styles
+- Mobile-responsive CSS for admin interfaces
+- Event handler namespacing (`.mets`) to prevent conflicts
+- Knowledge base search race condition fix (request abort on new search)
 
-## ⚡ Performance
+### Architecture Refactoring
+- Extracted AJAX handlers to `class-mets-admin-ajax.php` (29 methods)
+- Extracted settings management to `class-mets-admin-settings.php` (11 methods)
+- New `class-mets-ticket-service.php` service layer with unit tests
+- Admin class reduced from ~9,000 to ~6,000 lines (33% reduction)
 
-- **Query Optimization**: 68% improvement in database performance
-- **Caching**: WordPress Transients and object caching support
-- **Response Time**: < 200ms average API response time
-- **Memory Usage**: 25% reduction through optimized code
+## Documentation
 
-## 📚 Documentation
+- [API Documentation](multi-entity-ticket-system/docs/api-documentation.md)
+- [Shortcode Reference](multi-entity-ticket-system/docs/shortcodes.md)
+- [SMTP Setup Guide](multi-entity-ticket-system/docs/SMTP_SETUP_GUIDE.md)
+- [SMTP Quick Checklist](multi-entity-ticket-system/docs/SMTP_QUICK_CHECKLIST.md)
 
-- [Installation Guide](docs/installation.md)
-- [Configuration Guide](docs/configuration.md)
-- [API Documentation](docs/api-documentation.md)
-- [Shortcode Reference](docs/shortcodes.md)
-- [Security Best Practices](docs/security.md)
+## Testing
 
-## 🧪 Testing
-
-Run the comprehensive test suite:
+Unit tests are located in the `tests/` directory and use PHPUnit with the WordPress test suite:
 
 ```bash
-# Run all tests
-./run-tests.sh
-
-# Run specific test categories
-./mets-automated-testing-runner.sh security
-./mets-automated-testing-runner.sh performance
-./mets-automated-testing-runner.sh functional
+cd tests
+composer install
+./vendor/bin/phpunit
 ```
 
-## 🤝 Contributing
+## License
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+This project is licensed under the GPL v2 or later.
 
-## 📄 License
-
-This project is licensed under the GPL v2 or later - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
+## Author
 
 **Tomasz 'Amigo' Lewandowski**
 - Website: [https://attv.uk](https://attv.uk)
 - Email: lewandowski.tl@gmail.com
 
-## 🙏 Acknowledgments
+## Project Status
 
-- WordPress Community
-- WooCommerce Team
-- All contributors and testers
-
-## 📊 Project Status
-
-**Version**: 1.0.0  
-**Status**: Production Ready  
-**Last Updated**: August 2025
-
----
-
-*This plugin has been comprehensively tested and secured with enterprise-grade implementations.*
+**Version**: 1.1.0
+**Last Updated**: February 2026

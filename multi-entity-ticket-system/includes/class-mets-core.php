@@ -898,7 +898,7 @@ class METS_Core {
 			date( 'Y-m-d H:i:s', strtotime( '-90 days' ) )
 		) );
 
-		wp_send_json_success( sprintf( __( 'Deleted %d old security log entries', METS_TEXT_DOMAIN ), $deleted ) );
+		wp_send_json_success( array( 'message' => sprintf( __( 'Deleted %d old security log entries', METS_TEXT_DOMAIN ), $deleted ) ) );
 	}
 
 	/**
@@ -947,7 +947,7 @@ class METS_Core {
 		global $wpdb;
 		$deleted = $wpdb->query( "DELETE FROM {$wpdb->prefix}mets_rate_limits" );
 
-		wp_send_json_success( sprintf( __( 'Reset %d rate limit entries', METS_TEXT_DOMAIN ), $deleted ) );
+		wp_send_json_success( array( 'message' => sprintf( __( 'Reset %d rate limit entries', METS_TEXT_DOMAIN ), $deleted ) ) );
 	}
 
 	/**

@@ -133,7 +133,7 @@ if ( $time_remaining > 0 ) {
 			</div>
 
 			<div style="text-align: center;">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket->id ) ); ?>" class="action-button">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket->id ) ); ?>" class="action-button">
 					<?php _e( 'View Ticket Now', METS_TEXT_DOMAIN ); ?>
 				</a>
 			</div>

@@ -1510,6 +1510,7 @@ textarea::after,
 	outline-offset: 2px;
 }
 
+/* Keyboard-navigable entity dropdown */
 .mets-entity-item {
 	cursor: pointer;
 	padding: 8px 12px;

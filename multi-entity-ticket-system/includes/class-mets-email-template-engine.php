@@ -314,7 +314,7 @@ class METS_Email_Template_Engine {
 		// Generate URLs
 		$portal_url = METS_Core::get_ticket_portal_url();
 		$ticket_url = $portal_url . '?ticket=' . $ticket->ticket_number;
-		$admin_ticket_url = admin_url( 'admin.php?page=mets-tickets&action=view&id=' . $ticket->id );
+		$admin_ticket_url = admin_url( 'admin.php?page=mets-all-tickets&action=view&id=' . $ticket->id );
 
 		$data = array(
 			'ticket_number' => $ticket->ticket_number,

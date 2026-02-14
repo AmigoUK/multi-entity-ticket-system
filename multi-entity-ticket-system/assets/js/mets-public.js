@@ -361,6 +361,8 @@
 			
 			// Clear previous messages
 			successMessage.hide().empty();
+			// Clear previous messages
+			successMessage.hide().empty();
 			errorMessage.hide().empty();
 
 			// Reset field error states
@@ -393,31 +395,31 @@
 					isValid = false;
 				}
 			}
-
+			
 			// File size validation using actual PHP limits
 			var fileInput = $('#ticket_attachments')[0];
 			var maxFileSize = mets_public_ajax.upload_limits ? mets_public_ajax.upload_limits.max_file_size : (20 * 1024 * 1024); // Use PHP limit or fallback to 20MB
 			var maxFileSizeMB = mets_public_ajax.upload_limits ? mets_public_ajax.upload_limits.max_file_size_mb : 20;
 			var maxTotalSize = maxFileSize * 10; // Allow up to 10 files at max size
 			var totalSize = 0;
-
+			
 			if (fileInput && fileInput.files) {
 				for (var i = 0; i < fileInput.files.length; i++) {
 					var file = fileInput.files[i];
 					totalSize += file.size;
-
+					
 					if (file.size > maxFileSize) {
 						errorMessage.text('File "' + file.name + '" is too large. Maximum file size is ' + maxFileSizeMB + 'MB (server limit).').show();
 						return false;
 					}
 				}
-
+				
 				if (totalSize > maxTotalSize) {
 					errorMessage.text('Total file size too large (' + formatFileSize(totalSize) + '). Please reduce the number or size of files (max ' + Math.round(maxTotalSize/1024/1024) + 'MB total).').show();
 					return false;
 				}
 			}
-
+			
 			if (!isValid) {
 				if (firstErrorField) firstErrorField.focus();
 				return false;
@@ -716,7 +718,7 @@
 	 * @param {string}   action   WordPress AJAX action name
 	 * @param {object}   data     Request payload
 	 * @param {function} callback Success callback receiving response.data
-	 * @param {object}   opts     Optional: { button: jQuery element, errorContainer: jQuery element }
+	 * @param {object}   opts     Optional: { button: jQuery button element, errorContainer: jQuery element }
 	 */
 	function makeAjaxRequest(action, data, callback, opts) {
 		opts = opts || {};

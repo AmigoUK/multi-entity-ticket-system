@@ -326,6 +326,7 @@ class METS_Public {
 
 			<!-- Ticket Form (Initially Hidden for KB search, Shown for no KB search) -->
 			<form id="mets-ticket-form" class="mets-ticket-form" method="post" enctype="multipart/form-data" <?php echo ( $atts['require_kb_search'] === 'yes' ) ? 'style="display: none;"' : ''; ?>>
+				<div aria-live="polite" class="mets-sr-only" id="mets-form-status"></div>
 				<?php wp_nonce_field( 'mets_submit_ticket', 'mets_ticket_nonce' ); ?>
 				
 				<?php if ( $atts['require_kb_search'] === 'yes' ) : ?>
