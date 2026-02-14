@@ -719,6 +719,37 @@ input[type="color"] {
 	}
 }
 
+/* Breadcrumbs */
+.mets-breadcrumbs {
+	background: #f0f0f1;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 8px 12px;
+	margin: 10px 0 15px;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.mets-breadcrumbs a {
+	color: #2271b1;
+	text-decoration: none;
+}
+
+.mets-breadcrumbs a:hover {
+	color: #135e96;
+	text-decoration: underline;
+}
+
+.mets-breadcrumbs .mets-breadcrumb-sep {
+	color: #a7aaad;
+	margin: 0 4px;
+}
+
+.mets-breadcrumbs span[aria-current="page"] {
+	color: #1d2327;
+	font-weight: 600;
+}
+
 /* Focus Styles - Admin */
 .mets-form-section input:focus-visible,
 .mets-form-section select:focus-visible,
