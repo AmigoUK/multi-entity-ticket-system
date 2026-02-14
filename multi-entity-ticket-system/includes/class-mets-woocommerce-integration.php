@@ -255,7 +255,7 @@ class METS_WooCommerce_Integration {
 			$priority_class = 'mets-priority-' . sanitize_html_class( $ticket->priority );
 			
 			echo '<div class="mets-ticket-item ' . $status_class . ' ' . $priority_class . '">';
-			echo '<strong><a href="' . admin_url( 'admin.php?page=mets-tickets&action=view&id=' . $ticket->id ) . '">';
+			echo '<strong><a href="' . admin_url( 'admin.php?page=mets-all-tickets&action=view&id=' . $ticket->id ) . '">';
 			echo '#' . $ticket->id . ': ' . esc_html( $ticket->subject ) . '</a></strong><br>';
 			echo '<small>';
 			echo __( 'Status:', METS_TEXT_DOMAIN ) . ' <span class="status">' . ucfirst( $ticket->status ) . '</span> | ';
@@ -315,7 +315,7 @@ class METS_WooCommerce_Integration {
 		) );
 
 		if ( $ticket_count > 0 ) {
-			echo '<a href="' . admin_url( 'admin.php?page=mets-tickets&wc_order_id=' . $post_id ) . '">';
+			echo '<a href="' . admin_url( 'admin.php?page=mets-all-tickets&wc_order_id=' . $post_id ) . '">';
 			echo $ticket_count . ' ' . _n( 'ticket', 'tickets', $ticket_count, METS_TEXT_DOMAIN );
 			echo '</a>';
 		} else {
@@ -390,7 +390,7 @@ class METS_WooCommerce_Integration {
 				'message' => __( 'Support ticket created successfully!', METS_TEXT_DOMAIN ),
 				'ticket_id' => $ticket_id,
 				'redirect_url' => current_user_can( 'manage_tickets' ) 
-					? admin_url( 'admin.php?page=mets-tickets&action=view&id=' . $ticket_id )
+					? admin_url( 'admin.php?page=mets-all-tickets&action=view&id=' . $ticket_id )
 					: wc_get_account_endpoint_url( 'support-tickets' )
 			) );
 		} else {

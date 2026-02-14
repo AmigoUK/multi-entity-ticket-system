@@ -170,7 +170,7 @@ class METS_Agent_Status_Widget {
 			'id' => 'mets-my-tickets',
 			'parent' => 'mets-agent-status',
 			'title' => sprintf( __( 'My Tickets (%d)', METS_TEXT_DOMAIN ), $workload ),
-			'href' => admin_url( 'admin.php?page=mets-tickets&assigned_to=' . $current_user->ID )
+			'href' => admin_url( 'admin.php?page=mets-all-tickets&assigned_to=' . $current_user->ID )
 		) );
 		
 		$wp_admin_bar->add_node( array(
@@ -279,7 +279,7 @@ class METS_Agent_Status_Widget {
 			
 			<!-- Quick Links -->
 			<div class="mets-quick-links" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #dcdcde;">
-				<a href="<?php echo admin_url( 'admin.php?page=mets-tickets&assigned_to=' . $current_user_id ); ?>" class="button"><?php _e( 'My Tickets', METS_TEXT_DOMAIN ); ?></a>
+				<a href="<?php echo admin_url( 'admin.php?page=mets-all-tickets&assigned_to=' . $current_user_id ); ?>" class="button"><?php _e( 'My Tickets', METS_TEXT_DOMAIN ); ?></a>
 				<a href="<?php echo admin_url( 'profile.php#mets-agent-profile' ); ?>" class="button"><?php _e( 'Edit Profile', METS_TEXT_DOMAIN ); ?></a>
 			</div>
 		</div>

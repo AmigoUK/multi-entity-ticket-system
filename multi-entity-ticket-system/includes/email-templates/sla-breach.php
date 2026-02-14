@@ -165,10 +165,10 @@ if ( $hours_overdue > 0 ) {
 			</div>
 
 			<div style="text-align: center;">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-tickets&action=edit&ticket_id=' . $ticket->id ) ); ?>" class="action-button">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket->id ) ); ?>" class="action-button">
 					<?php _e( 'Handle Ticket Immediately', METS_TEXT_DOMAIN ); ?>
 				</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-tickets' ) ); ?>" class="action-button escalate-button">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mets-all-tickets' ) ); ?>" class="action-button escalate-button">
 					<?php _e( 'View All Tickets', METS_TEXT_DOMAIN ); ?>
 				</a>
 			</div>

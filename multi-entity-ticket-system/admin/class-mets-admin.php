@@ -3381,12 +3381,15 @@ class METS_Admin {
 		}
 		
 		// Select all functionality
-		document.getElementById('cb-select-all-1').addEventListener('change', function() {
-			var checkboxes = document.querySelectorAll('input[name="articles[]"]');
-			for (var i = 0; i < checkboxes.length; i++) {
-				checkboxes[i].checked = this.checked;
-			}
-		});
+		var selectAll = document.getElementById('cb-select-all-1');
+		if (selectAll) {
+			selectAll.addEventListener('change', function() {
+				var checkboxes = document.querySelectorAll('input[name="articles[]"]');
+				for (var i = 0; i < checkboxes.length; i++) {
+					checkboxes[i].checked = this.checked;
+				}
+			});
+		}
 		</script>
 		<?php
 	}
@@ -3834,12 +3837,15 @@ class METS_Admin {
 		});
 		
 		// Select all functionality
-		document.getElementById('cb-select-all-1').addEventListener('change', function() {
-			var checkboxes = document.querySelectorAll('input[name="categories[]"]');
-			for (var i = 0; i < checkboxes.length; i++) {
-				checkboxes[i].checked = this.checked;
-			}
-		});
+		var selectAllCats = document.getElementById('cb-select-all-1');
+		if (selectAllCats) {
+			selectAllCats.addEventListener('change', function() {
+				var checkboxes = document.querySelectorAll('input[name="categories[]"]');
+				for (var i = 0; i < checkboxes.length; i++) {
+					checkboxes[i].checked = this.checked;
+				}
+			});
+		}
 		</script>
 		<?php
 	}

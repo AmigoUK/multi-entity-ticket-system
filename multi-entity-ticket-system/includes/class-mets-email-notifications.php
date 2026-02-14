@@ -320,7 +320,7 @@ class METS_Email_Notifications {
 		// Build portal URL
 		$portal_url = METS_Core::get_ticket_portal_url();
 		$ticket_url = $portal_url ? add_query_arg( array( 'ticket' => $ticket->ticket_number ), $portal_url ) : '';
-		$admin_ticket_url = admin_url( "admin.php?page=mets-tickets&action=edit&ticket_id={$ticket->id}" );
+		$admin_ticket_url = admin_url( "admin.php?page=mets-all-tickets&action=edit&ticket_id={$ticket->id}" );
 
 		return array(
 			'ticket_id' => $ticket->id,
