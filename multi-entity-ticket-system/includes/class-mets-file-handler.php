@@ -153,7 +153,7 @@ class METS_File_Handler {
 			'file_type'   => $this->get_file_extension( $file_data['name'] ),
 			'file_size'   => $file_data['size'],
 			'file_url'    => $upload_result['url'],
-			'uploaded_by' => get_current_user_id(),
+			'uploaded_by' => get_current_user_id() ?: null,
 		);
 
 		$attachment_id = $this->attachment_model->create( $attachment_data );

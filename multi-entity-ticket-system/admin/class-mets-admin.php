@@ -786,7 +786,7 @@ class METS_Admin {
 					'type' => 'error'
 				), 45 );
 			} else {
-				
+
 				// Log changes as system reply
 				if ( ! empty( $changes ) ) {
 					$change_log = implode( "\n", $changes );
@@ -799,13 +799,38 @@ class METS_Admin {
 					);
 					$reply_model->create( $reply_data );
 				}
-				
+
+				// Handle file uploads for updated ticket
+				$success_message = __( 'Ticket details updated successfully.', METS_TEXT_DOMAIN );
+				if ( ! empty( $_FILES['ticket_attachments']['name'][0] ) ) {
+					require_once METS_PLUGIN_PATH . 'includes/class-mets-file-handler.php';
+					$file_handler = new METS_File_Handler();
+					$upload_results = $file_handler->handle_upload( $_FILES['ticket_attachments'], $ticket_id );
+
+					$upload_errors = array();
+					$upload_success_count = 0;
+					foreach ( $upload_results as $upload_result ) {
+						if ( $upload_result['success'] ) {
+							$upload_success_count++;
+						} else {
+							$upload_errors[] = sprintf( __( 'File "%s": %s', METS_TEXT_DOMAIN ), $upload_result['file'], $upload_result['message'] );
+						}
+					}
+
+					if ( $upload_success_count > 0 ) {
+						$success_message .= sprintf( __( ' %d file(s) uploaded.', METS_TEXT_DOMAIN ), $upload_success_count );
+					}
+					if ( ! empty( $upload_errors ) ) {
+						$success_message .= __( ' Upload errors: ', METS_TEXT_DOMAIN ) . implode( ', ', $upload_errors );
+					}
+				}
+
 				set_transient( 'mets_admin_notice', array(
-					'message' => __( 'Ticket details updated successfully.', METS_TEXT_DOMAIN ),
+					'message' => $success_message,
 					'type' => 'success'
 				), 45 );
 			}
-			
+
 			$redirect_url = admin_url( 'admin.php?page=mets-all-tickets&action=edit&ticket_id=' . $ticket_id );
 			wp_redirect( $redirect_url );
 			exit;

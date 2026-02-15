@@ -224,8 +224,7 @@ class METS_Core {
 	 */
 	private function set_locale() {
 		$plugin_i18n = new METS_I18n();
-
-		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
+		$plugin_i18n->load_plugin_textdomain();
 	}
 
 	/**
@@ -280,6 +279,7 @@ class METS_Core {
 		$this->loader->add_action( 'wp_ajax_mets_upload_file', $plugin_public, 'ajax_upload_file' );
 		$this->loader->add_action( 'wp_ajax_nopriv_mets_upload_file', $plugin_public, 'ajax_upload_file' );
 		$this->loader->add_action( 'wp_ajax_mets_customer_reply', $plugin_public, 'ajax_customer_reply' );
+		$this->loader->add_action( 'wp_ajax_nopriv_mets_customer_reply', $plugin_public, 'ajax_customer_reply' );
 		$this->loader->add_action( 'wp_ajax_mets_search_entities_public', $plugin_public, 'ajax_search_entities' );
 		$this->loader->add_action( 'wp_ajax_nopriv_mets_search_entities_public', $plugin_public, 'ajax_search_entities' );
 		$this->loader->add_action( 'wp_ajax_mets_search_kb_articles', $plugin_public, 'ajax_search_kb_articles' );

@@ -86,4 +86,4 @@ function run_multi_entity_ticket_system() {
 	$plugin = METS_Core::get_instance();
 	$plugin->run();
 }
-run_multi_entity_ticket_system();
+add_action( 'init', 'run_multi_entity_ticket_system', 0 );

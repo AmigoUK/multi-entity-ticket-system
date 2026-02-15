@@ -1199,10 +1199,16 @@ class METS_Public {
 			) );
 		}
 
-		// Load KB article model
+		// Load KB article model — check table exists first
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'mets_kb_articles';
+		if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) !== $table_name ) {
+			wp_send_json_success( array( 'articles' => array(), 'total' => 0 ) );
+		}
+
 		require_once METS_PLUGIN_PATH . 'includes/models/class-mets-kb-article-model.php';
 		$article_model = new METS_KB_Article_Model();
-		
+
 		// Search for published articles with inheritance
 		$args = array(
 			'entity_id' => $entity_id > 0 ? $entity_id : null,

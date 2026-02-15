@@ -109,6 +109,7 @@ class METS_Tables {
 			sla_escalation_due datetime,
 			sla_response_breached tinyint(1) DEFAULT 0,
 			sla_resolution_breached tinyint(1) DEFAULT 0,
+			sla_status varchar(50) DEFAULT 'none',
 			first_response_at datetime,
 			resolved_at datetime,
 			closed_at datetime,

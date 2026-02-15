@@ -62,16 +62,27 @@ class METS_Attachment_Model {
 		// Prepare data for insertion
 		$insert_data = array(
 			'ticket_id'   => intval( $data['ticket_id'] ),
-			'reply_id'    => ! empty( $data['reply_id'] ) ? intval( $data['reply_id'] ) : null,
 			'file_name'   => sanitize_text_field( $data['file_name'] ),
 			'file_type'   => ! empty( $data['file_type'] ) ? sanitize_text_field( $data['file_type'] ) : '',
-			'file_size'   => ! empty( $data['file_size'] ) ? intval( $data['file_size'] ) : null,
+			'file_size'   => ! empty( $data['file_size'] ) ? intval( $data['file_size'] ) : 0,
 			'file_url'    => esc_url( $data['file_url'] ),
-			'uploaded_by' => ! empty( $data['uploaded_by'] ) ? intval( $data['uploaded_by'] ) : get_current_user_id(),
 			'created_at'  => current_time( 'mysql' ),
 		);
 
-		$format = array( '%d', '%d', '%s', '%s', '%d', '%s', '%d', '%s' );
+		$format = array( '%d', '%s', '%s', '%d', '%s', '%s' );
+
+		// Only include reply_id when set — wpdb converts null + %d to 0, breaking IS NULL queries
+		if ( ! empty( $data['reply_id'] ) ) {
+			$insert_data['reply_id'] = intval( $data['reply_id'] );
+			$format[] = '%d';
+		}
+
+		// Only include uploaded_by when set — FK constraint rejects 0, use NULL for guest uploads
+		$uploader_id = ! empty( $data['uploaded_by'] ) ? intval( $data['uploaded_by'] ) : get_current_user_id();
+		if ( $uploader_id > 0 ) {
+			$insert_data['uploaded_by'] = $uploader_id;
+			$format[] = '%d';
+		}
 
 		$result = $wpdb->insert( $this->table_name, $insert_data, $format );
 
