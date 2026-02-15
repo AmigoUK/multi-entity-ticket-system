@@ -47,6 +47,15 @@ class METS_Admin {
 	private $settings_handler;
 
 	/**
+	 * Test data manager instance (dev/staging only).
+	 *
+	 * @since    1.2.0
+	 * @access   private
+	 * @var      METS_Test_Data_Manager|null
+	 */
+	private $test_data_manager = null;
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -115,6 +124,14 @@ class METS_Admin {
 		// Delegate settings management to dedicated class
 		require_once METS_PLUGIN_PATH . 'admin/class-mets-admin-settings.php';
 		$this->settings_handler = new METS_Admin_Settings( $this->plugin_name, $this->version );
+
+		// Test Data Manager (dev/staging only)
+		require_once METS_PLUGIN_PATH . 'admin/class-mets-test-data-manager.php';
+		if ( METS_Test_Data_Manager::is_enabled() ) {
+			$this->test_data_manager = new METS_Test_Data_Manager();
+			add_action( 'wp_ajax_mets_import_test_data', array( $this->test_data_manager, 'ajax_import_test_data' ) );
+			add_action( 'wp_ajax_mets_remove_test_data', array( $this->test_data_manager, 'ajax_remove_test_data' ) );
+		}
 	}
 
 	/**
@@ -133,12 +150,22 @@ class METS_Admin {
 	 */
 	public function enqueue_scripts() {
 		wp_enqueue_script( $this->plugin_name, METS_PLUGIN_URL . 'assets/js/mets-admin.js', array( 'jquery' ), $this->version, false );
-		
+
 		// Localize script for AJAX
 		wp_localize_script( $this->plugin_name, 'mets_admin_ajax', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'mets_admin_nonce' ),
 		) );
+
+		// Test Data Manager JS (only on its own screen)
+		$screen = get_current_screen();
+		if ( $screen && $screen->id === 'mets-tickets_page_mets-test-data' && $this->test_data_manager ) {
+			wp_enqueue_script( 'mets-test-data', METS_PLUGIN_URL . 'assets/js/mets-test-data.js', array( 'jquery' ), $this->version, true );
+			wp_localize_script( 'mets-test-data', 'mets_test_data', array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'mets_admin_nonce' ),
+			) );
+		}
 	}
 
 	/**
@@ -440,6 +467,18 @@ class METS_Admin {
 					'manage_options',
 					'mets-security-dashboard',
 					array( $this, 'display_security_dashboard_page' )
+				);
+			}
+
+			// Test Data Manager (dev/staging only)
+			if ( $this->test_data_manager ) {
+				add_submenu_page(
+					'mets-tickets',
+					__( 'Test Data Manager', METS_TEXT_DOMAIN ),
+					__( '🧪 Test Data', METS_TEXT_DOMAIN ),
+					'manage_ticket_system',
+					'mets-test-data',
+					array( $this->test_data_manager, 'display_test_data_page' )
 				);
 			}
 		}
