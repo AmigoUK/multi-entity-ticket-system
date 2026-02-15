@@ -417,8 +417,8 @@ class METS_Comprehensive_Dashboard {
                         <div class="mets-shortcode-card">
                             <h3><?php _e( 'Customer Portal', METS_TEXT_DOMAIN ); ?></h3>
                             <div class="mets-shortcode-code">
-                                <code>[customer_portal]</code>
-                                <button class="mets-copy-btn" data-copy="[customer_portal]">
+                                <code>[ticket_portal]</code>
+                                <button class="mets-copy-btn" data-copy="[ticket_portal]">
                                     <span class="dashicons dashicons-clipboard"></span>
                                 </button>
                             </div>
@@ -427,7 +427,8 @@ class METS_Comprehensive_Dashboard {
                                 <h4><?php _e( 'Parameters:', METS_TEXT_DOMAIN ); ?></h4>
                                 <ul>
                                     <li><code>show_closed="yes"</code> - <?php _e( 'Show closed tickets', METS_TEXT_DOMAIN ); ?></li>
-                                    <li><code>tickets_per_page="10"</code> - <?php _e( 'Number of tickets to display', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>per_page="10"</code> - <?php _e( 'Number of tickets to display', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>allow_new_ticket="yes"</code> - <?php _e( 'Show new ticket link', METS_TEXT_DOMAIN ); ?></li>
                                 </ul>
                             </div>
                         </div>
@@ -436,8 +437,8 @@ class METS_Comprehensive_Dashboard {
                         <div class="mets-shortcode-card">
                             <h3><?php _e( 'Knowledge Base Search', METS_TEXT_DOMAIN ); ?></h3>
                             <div class="mets-shortcode-code">
-                                <code>[kb_search]</code>
-                                <button class="mets-copy-btn" data-copy="[kb_search]">
+                                <code>[mets_kb_search]</code>
+                                <button class="mets-copy-btn" data-copy="[mets_kb_search]">
                                     <span class="dashicons dashicons-clipboard"></span>
                                 </button>
                             </div>
@@ -445,47 +446,48 @@ class METS_Comprehensive_Dashboard {
                             <div class="mets-shortcode-params">
                                 <h4><?php _e( 'Parameters:', METS_TEXT_DOMAIN ); ?></h4>
                                 <ul>
-                                    <li><code>placeholder="Search for help..."</code> - <?php _e( 'Search box placeholder', METS_TEXT_DOMAIN ); ?></li>
-                                    <li><code>show_categories="yes"</code> - <?php _e( 'Display category list', METS_TEXT_DOMAIN ); ?></li>
-                                    <li><code>show_popular="5"</code> - <?php _e( 'Show popular articles', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>placeholder="Search knowledgebase..."</code> - <?php _e( 'Search box placeholder', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>entity_id="1"</code> - <?php _e( 'Filter by entity', METS_TEXT_DOMAIN ); ?></li>
                                 </ul>
                             </div>
                         </div>
                         
-                        <!-- Entity List -->
+                        <!-- KB Categories -->
                         <div class="mets-shortcode-card">
-                            <h3><?php _e( 'Entity Directory', METS_TEXT_DOMAIN ); ?></h3>
+                            <h3><?php _e( 'KB Categories', METS_TEXT_DOMAIN ); ?></h3>
                             <div class="mets-shortcode-code">
-                                <code>[entity_list]</code>
-                                <button class="mets-copy-btn" data-copy="[entity_list]">
+                                <code>[mets_kb_categories]</code>
+                                <button class="mets-copy-btn" data-copy="[mets_kb_categories]">
                                     <span class="dashicons dashicons-clipboard"></span>
                                 </button>
                             </div>
-                            <p><?php _e( 'Display a list of all active entities/departments.', METS_TEXT_DOMAIN ); ?></p>
+                            <p><?php _e( 'Display knowledge base categories as cards.', METS_TEXT_DOMAIN ); ?></p>
                             <div class="mets-shortcode-params">
                                 <h4><?php _e( 'Parameters:', METS_TEXT_DOMAIN ); ?></h4>
                                 <ul>
-                                    <li><code>show_contact="yes"</code> - <?php _e( 'Show contact info', METS_TEXT_DOMAIN ); ?></li>
-                                    <li><code>columns="3"</code> - <?php _e( 'Number of columns', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>entity_id="1"</code> - <?php _e( 'Filter by entity', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>show_count="yes"</code> - <?php _e( 'Show article count', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>layout="grid"</code> - <?php _e( 'Layout: grid or list', METS_TEXT_DOMAIN ); ?></li>
                                 </ul>
                             </div>
                         </div>
-                        
-                        <!-- Ticket Stats -->
+
+                        <!-- KB Popular Articles -->
                         <div class="mets-shortcode-card">
-                            <h3><?php _e( 'Ticket Statistics', METS_TEXT_DOMAIN ); ?></h3>
+                            <h3><?php _e( 'Popular Articles', METS_TEXT_DOMAIN ); ?></h3>
                             <div class="mets-shortcode-code">
-                                <code>[ticket_stats]</code>
-                                <button class="mets-copy-btn" data-copy="[ticket_stats]">
+                                <code>[mets_kb_popular_articles]</code>
+                                <button class="mets-copy-btn" data-copy="[mets_kb_popular_articles]">
                                     <span class="dashicons dashicons-clipboard"></span>
                                 </button>
                             </div>
-                            <p><?php _e( 'Display ticket statistics and metrics (admin only).', METS_TEXT_DOMAIN ); ?></p>
+                            <p><?php _e( 'Display most viewed knowledge base articles.', METS_TEXT_DOMAIN ); ?></p>
                             <div class="mets-shortcode-params">
                                 <h4><?php _e( 'Parameters:', METS_TEXT_DOMAIN ); ?></h4>
                                 <ul>
-                                    <li><code>type="summary"</code> - <?php _e( 'Stats type: summary, chart, table', METS_TEXT_DOMAIN ); ?></li>
-                                    <li><code>period="week"</code> - <?php _e( 'Time period: day, week, month', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>limit="5"</code> - <?php _e( 'Number of articles to show', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>show_views="yes"</code> - <?php _e( 'Show view count', METS_TEXT_DOMAIN ); ?></li>
+                                    <li><code>show_rating="yes"</code> - <?php _e( 'Show helpfulness rating', METS_TEXT_DOMAIN ); ?></li>
                                 </ul>
                             </div>
                         </div>

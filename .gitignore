@@ -38,6 +38,14 @@ wp-content/plugins/*
 !mets-*.sh
 !multi-entity-ticket-system/
 
+# Test generated files
+tests/vendor/
+tests/composer.lock
+tests/e2e/node_modules/
+tests/e2e/package-lock.json
+tests/e2e/test-results/
+tests/e2e/test-summary.json
+
 # Security - exclude sensitive files
 wp-config.php
 *.sql
